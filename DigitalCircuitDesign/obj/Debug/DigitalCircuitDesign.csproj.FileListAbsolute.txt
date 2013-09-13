@@ -1,0 +1,9 @@
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.exe.config
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.exe
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.pdb
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csprojResolveAssemblyReference.cache
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.Form1.resources
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.Properties.Resources.resources
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csproj.GenerateResource.Cache
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.exe
+c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.pdb
