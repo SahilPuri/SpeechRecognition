@@ -7,3 +7,12 @@ c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\Digi
 c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csproj.GenerateResource.Cache
 c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.exe
 c:\users\patrick\documents\visual studio 2012\Projects\DigitalCircuitDesign\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.pdb
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.exe.config
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.exe
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.pdb
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.exe
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\bin\Debug\DigitalCircuitDesign.pdb
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csprojResolveAssemblyReference.cache
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.Form1.resources
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.Properties.Resources.resources
+E:\Workspace\github\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csproj.GenerateResource.Cache

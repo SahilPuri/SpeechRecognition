@@ -30,7 +30,8 @@ namespace DigitalCircuitDesign
         {
             DrawGrid();
             DrawComponents();
-            RecognizeSpeech();
+            DrawLinks();
+         //   RecognizeSpeech();
             //base.OnPaint(e);
             //DrawLShapeLine(this.CreateGraphics(), 10, 10, 20, 40);
         }
@@ -90,7 +91,7 @@ namespace DigitalCircuitDesign
                 {
                     int x = start + variable2 * height + 1;
                     int y = start + variable1 * width + error;
-                    String imageFolder = "C:\\Users\\patrick\\Documents\\Visual Studio 2012\\Projects\\DigitalCircuitDesign\\DigitalCircuitDesign\\images\\";
+                    String imageFolder ="E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
                     switch (array[variable1, variable2])
                     {
                         case "A":
@@ -146,11 +147,92 @@ namespace DigitalCircuitDesign
             }
             this.Invalidate();
         }
+        public void DrawLinks(){
+            char[] c = new char[1];
+            int[] offset=new int[1];
+            c[0] = 'U';
+            offset[0] = 0;
+            connectGates(2, 2, c,offset);
+            c[0] = 'L';
+            offset[0] = 1;
+            connectGates(4, 4, c, offset);
+            c[0] = 'R';
+            offset[0] = 2;
+            connectGates(5, 5, c, offset);
+            c[0] = 'D';
+            offset[0] = 3;
+            connectGates(6, 6, c, offset);
 
-        public void connectGates(int rowS, int colS, int rowE, int colE)
+            c = new char[7];
+            c[0] = 'L';
+            c[1] = 'U';
+            c[2] = 'R';
+            c[3] = 'R';
+            c[4] = 'R';
+            c[5] = 'D';
+            c[6] = 'D';
+            offset = new int[7];
+            offset[0] = 0;
+            offset[1] = 0;
+            offset[2] = 0;
+            offset[3] = 0;
+            offset[4] = 0;
+            offset[5] = 0;
+            offset[6] = 0;
+            connectGates(9, 3, c, offset);
+        }
+        public void connectGates(int rowS, int colS, char[] path, int[] offset)
         { 
             //Method implement to add connection between gates
+            //additional 4 for start, and 3 arrow points
+            Point[] points =new Point[path.Length+4];
+            int currx=rowS*width+start,curry=colS*height+start;
+            points[0] = new Point(currx, curry);
+            for (int i = 0; i < path.Length; i++)
+            {
+                switch (path[i])
+                {
+                    case 'L': 
+                        currx-=width; 
+                        break;
+                    case 'R': currx += width; break;
+                    case 'U': curry -= height; break;
+                    case 'D': curry += height; break;
+                }
+                points[i + 1] = new Point(currx,curry);
+            }
+            int arrowSize = 5;
+            int x = points[path.Length].X;
+            int y = points[path.Length].Y;
+            // Arrow
+            switch(path[path.Length-1]){
+                case 'L':
+                    //left arrow
+                    points[path.Length+1] = new Point(x+ arrowSize, y - arrowSize);
+            points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
+            points[path.Length+3]=new Point(x , y);break;
+                case 'R':
+                    //right arrow
+                    points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
+            points[path.Length+2]=new Point(x - arrowSize, y + arrowSize);
+            points[path.Length+3]=new Point(x , y);break;
+                case 'U':
+                    //up arrow
+                    points[path.Length+1] = new Point(x- arrowSize, y + arrowSize);
+            points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
+            points[path.Length+3]=new Point(x , y);break;
+                case 'D':
+                    //down arrow
+                    points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
+            points[path.Length+2]=new Point(x + arrowSize, y - arrowSize);
+            points[path.Length+3]=new Point(x , y);break;
         }
+            
+            Pen myPen = new Pen(Color.Blue);
+            myPen.Width = 4;
+            this.CreateGraphics().DrawLines(myPen, points);
+        }
+        
         public void DrawLShapeLine(System.Drawing.Graphics g, int intMarginLeft, int intMarginTop, int intWidth, int intHeight)
         {
             Pen myPen = new Pen(Color.Black);
@@ -263,7 +345,7 @@ namespace DigitalCircuitDesign
                     int rowE = GetNumber(tokens[6]);
                     int colE = GetNumber(tokens[7]);
                     MessageBox.Show(e.Result.Text);
-                    connectGates(rowS, colS, rowE, colE);
+                    //connectGates(rowS, colS, rowE, colE);
                 }
             else if (tokens[0] == "Clear")
             { }
@@ -305,9 +387,10 @@ namespace DigitalCircuitDesign
 
             return toReturn;
         }
-            
-        /*
-            addGates("and", "R0", "C0");
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+           addGates("and", "R0", "C0");
             addGates("or", "R0", "C1");
             addGates("not", "R0", "C2");
             addGates("xor", "R0", "C3");
@@ -315,6 +398,6 @@ namespace DigitalCircuitDesign
             addGates("nor", "R0", "C5");
             addGates("xnor", "R0", "C10");
             addGates("xnor", "R7", "C19");
-        }*/
+        }
     }
 }
