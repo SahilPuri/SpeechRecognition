@@ -157,7 +157,7 @@ namespace DigitalCircuitDesign
             offset[0] = 1;
             connectGates(4, 4, c, offset);
             c[0] = 'R';
-            offset[0] = 2;
+            offset[0] = 5;
             connectGates(5, 5, c, offset);
             c[0] = 'D';
             offset[0] = 3;
@@ -172,32 +172,63 @@ namespace DigitalCircuitDesign
             c[5] = 'D';
             c[6] = 'D';
             offset = new int[7];
-            offset[0] = 0;
-            offset[1] = 0;
-            offset[2] = 0;
-            offset[3] = 0;
+            offset[0] = -5;
+            offset[1] = -10;
+            offset[2] = -20;
+            offset[3] = -10;
             offset[4] = 0;
-            offset[5] = 0;
-            offset[6] = 0;
+            offset[5] = -10;
+            offset[6] = -10;
             connectGates(9, 3, c, offset);
+
+            c = new char[3];
+            c[0] = 'R';
+            c[1] = 'L';
+            c[2] = 'R';
+            offset = new int[3];
+            offset[0] = 0;
+            offset[1] = 5;
+            offset[2] = 0;
+            connectGates(12, 3, c, offset);
+
+
         }
         public void connectGates(int rowS, int colS, char[] path, int[] offset)
-        { 
+        {
+            //lasth and v offset keep track of recent offset difference
+            int lasthoffset=0, lastvoffset=0;
+            int currx = rowS * width + start, curry = colS * height + start;
             //Method implement to add connection between gates
             //additional 4 for start, and 3 arrow points
             Point[] points =new Point[path.Length+4];
-            int currx=rowS*width+start,curry=colS*height+start;
+            if (path.Length > 1)
+            {
+                if (path[0] == 'L' || path[0] == 'R')
+                {
+                    curry += offset[0];
+                    lastvoffset = offset[0];
+                }
+                else
+                {
+                    currx += offset[0];
+                    lasthoffset = offset[0];
+                }
+            }
             points[0] = new Point(currx, curry);
+
+            //calculate remaining points
             for (int i = 0; i < path.Length; i++)
             {
+                int nextOffset=(i!=path.Length-1 && 
+                    (((path[i]=='L' || path[i]=='R') && (path[i+1]=='U' || path[i+1]=='D')) || 
+                    ((path[i]=='U' || path[i]=='D') && (path[i+1]=='L' || path[i+1]=='R'))))?offset[i+1]:0;
+                //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {
-                    case 'L': 
-                        currx-=width; 
-                        break;
-                    case 'R': currx += width; break;
-                    case 'U': curry -= height; break;
-                    case 'D': curry += height; break;
+                    case 'L': currx =currx-lasthoffset-width + nextOffset; lasthoffset=nextOffset; break;
+                    case 'R': currx = currx-lasthoffset+width + nextOffset; lasthoffset = nextOffset; break;
+                    case 'U': curry = curry-lastvoffset-height +nextOffset; lastvoffset = nextOffset; break;
+                    case 'D': curry = curry-lastvoffset+height +nextOffset; lastvoffset = nextOffset; break;
                 }
                 points[i + 1] = new Point(currx,curry);
             }
@@ -229,7 +260,7 @@ namespace DigitalCircuitDesign
         }
             
             Pen myPen = new Pen(Color.Blue);
-            myPen.Width = 4;
+            myPen.Width = 3;
             this.CreateGraphics().DrawLines(myPen, points);
         }
         
