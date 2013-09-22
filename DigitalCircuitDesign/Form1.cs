@@ -21,17 +21,19 @@ namespace DigitalCircuitDesign
         int error = 10;
 
         string[,] array = new string[100, 100];
+        ConnectLink clObject;
         public Form1()
         {
             InitializeComponent();
             clearScreen();
+            clObject = new ConnectLink(nWidth, nHeight,2);
         }
         protected override void OnPaint(PaintEventArgs e)
         {
             DrawGrid();
             DrawComponents();
-            DrawLinks();
-         //   RecognizeSpeech();
+            //DrawLinks();
+            //RecognizeSpeech();
             //base.OnPaint(e);
             //DrawLShapeLine(this.CreateGraphics(), 10, 10, 20, 40);
         }
@@ -147,57 +149,15 @@ namespace DigitalCircuitDesign
             }
             this.Invalidate();
         }
-        public void DrawLinks(){
-            char[] c = new char[1];
-            int[] offset=new int[1];
-            c[0] = 'U';
-            offset[0] = 0;
-            connectGates(2, 2, c,offset);
-            c[0] = 'L';
-            offset[0] = 1;
-            connectGates(4, 4, c, offset);
-            c[0] = 'R';
-            offset[0] = 5;
-            connectGates(5, 5, c, offset);
-            c[0] = 'D';
-            offset[0] = 3;
-            connectGates(6, 6, c, offset);
-
-            c = new char[7];
-            c[0] = 'L';
-            c[1] = 'U';
-            c[2] = 'R';
-            c[3] = 'R';
-            c[4] = 'R';
-            c[5] = 'D';
-            c[6] = 'D';
-            offset = new int[7];
-            offset[0] = -5;
-            offset[1] = -10;
-            offset[2] = -20;
-            offset[3] = -10;
-            offset[4] = 0;
-            offset[5] = -10;
-            offset[6] = -10;
-            connectGates(9, 3, c, offset);
-
-            c = new char[3];
-            c[0] = 'R';
-            c[1] = 'L';
-            c[2] = 'R';
-            offset = new int[3];
-            offset[0] = 0;
-            offset[1] = 5;
-            offset[2] = 0;
-            connectGates(12, 3, c, offset);
-
-
+        public void DrawLinks(int startx,int starty,int endx,int endy){    
+            LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
+            connectGates(startx,starty, ld.directions, ld.offset);
         }
         public void connectGates(int rowS, int colS, char[] path, int[] offset)
         {
             //lasth and v offset keep track of recent offset difference
             int lasthoffset=0, lastvoffset=0;
-            int currx = rowS * width + start, curry = colS * height + start;
+            int curry = rowS * height + start, currx = colS * width + start;
             //Method implement to add connection between gates
             //additional 4 for start, and 3 arrow points
             Point[] points =new Point[path.Length+4];
@@ -421,14 +381,142 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-           addGates("and", "R0", "C0");
+            DrawLinks(0,1,4,5);
+           /*addGates("and", "R0", "C0");
             addGates("or", "R0", "C1");
             addGates("not", "R0", "C2");
             addGates("xor", "R0", "C3");
             addGates("nand", "R0", "C4");
             addGates("nor", "R0", "C5");
             addGates("xnor", "R0", "C10");
-            addGates("xnor", "R7", "C19");
+            addGates("xnor", "R7", "C19");*/
+        }
+
+
+    }
+
+    public class LinkDirections
+    {
+        public int[] offset;
+        public char[] directions;
+
+        public LinkDirections(int size)
+        {
+            this.offset = new int[size];
+            this.directions = new char[size];
+        }
+    }
+
+    public class ConnectLink
+    {
+        Dictionary<int, Dictionary<int, int>> graph;
+        private int m;
+        private int n;
+        private int maxLinks;
+
+
+        public ConnectLink(int m, int n, int max)
+        {
+            // TODO: Complete member initialization
+            this.m = m;
+            this.n = n;
+            this.maxLinks = max;
+            int size = m * n;
+            graph = new Dictionary<int, Dictionary<int, int>>();
+            for (int i = 0; i < size; i++)
+                graph.Add(i, new Dictionary<int, int>());
+            for (int i = 0; i < size; i++)
+            {
+
+                if (((i + 1) % n) != 0)
+                {
+                    graph[i].Add(i + 1, max);
+                    graph[i + 1].Add(i, max);
+
+                }
+
+                if (i < size - n)
+                {
+                    graph[i].Add(i + n, max);
+                    graph[i + n].Add(i, max);
+                }
+            }
+        }
+
+        public int cordinateToindex(int x, int y)
+        {
+            return (x * this.n) + y;
+        }
+
+        public int[] indesToCoordinate(int coordinate)
+        {
+            int[] res = new int[2];
+            res[0] = coordinate % this.m;
+            res[1] = coordinate % this.n;
+
+            return res;
+        }
+
+        public LinkDirections shortestpath(int x1, int y1, int x2, int y2)
+        {
+            int start = cordinateToindex(x1, y1);
+            int dest = cordinateToindex(x2, y2);
+            int size = this.m * this.n;
+            Queue<int> queue = new Queue<int>();
+            int[] dist = new int[size];
+            int[] prev = new int[size];
+            int[] color = new int[size];
+
+
+            for (int i = 0; i < size; i++)
+            {
+                dist[i] = int.MaxValue;
+                prev[i] = -1;
+                color[i] = 0;
+            }
+
+            dist[start] = 0;
+            color[start] = 1;
+            queue.Enqueue(start);
+
+            while (queue.Count != 0)
+            {
+                int temp = queue.Dequeue();
+
+                foreach (int i in graph[temp].Keys)
+                    if (i != temp && graph[temp][i] > 0)
+                        if (color[i] == 0)
+                        {
+                            color[i] = 1;
+                            dist[i] = dist[temp] + 1;
+                            prev[i] = temp;
+                            queue.Enqueue(i);
+                        }
+                color[temp] = 2;
+            }
+
+            int totalLen = dist[dest];
+            LinkDirections ld = new LinkDirections(totalLen);
+            int next = dest;
+            int j = totalLen - 1;
+            while (next != start)
+            {
+                if ((prev[next] + 1) == next)
+                    ld.directions[j] = 'R';
+                else if (prev[next] == (next + 1))
+                    ld.directions[j] = 'L';
+                else if (prev[next] > next)
+                    ld.directions[j] = 'U';
+                else
+                    ld.directions[j] = 'D';
+                ld.offset[j] = this.maxLinks - this.graph[prev[next]][next];
+                j--;
+                this.graph[prev[next]][next] -= 1;
+                this.graph[next][prev[next]] -= 1;
+                next = prev[next];
+            }
+
+            return ld;
         }
     }
 }
