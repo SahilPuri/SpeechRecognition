@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -19,20 +20,25 @@ namespace DigitalCircuitDesign
         int width = 60;
         int height = 60;
         int error = 10;
+        static String imageFolder = "C:\\Users\\Sail\\Documents\\GitHub\\SpeechRecognition\\DigitalCircuitDesign\\images\\";
 
-        string[,] array = new string[100, 100];
+        /*Start of State of the System*/
+        Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
+        Dictionary<int, LinkDirections> links = new Dictionary<int, LinkDirections>();
         ConnectLink clObject;
+        int linkCnt = 0;
+        /*End of State of the System*/
+        
         public Form1()
         {
             InitializeComponent();
             clearScreen();
-            clObject = new ConnectLink(nWidth, nHeight,2);
+            clObject = new ConnectLink(nHeight, nWidth,2);
         }
         protected override void OnPaint(PaintEventArgs e)
         {
             DrawGrid();
             DrawComponents();
-            //DrawLinks();
             //RecognizeSpeech();
             //base.OnPaint(e);
             //DrawLShapeLine(this.CreateGraphics(), 10, 10, 20, 40);
@@ -77,58 +83,59 @@ namespace DigitalCircuitDesign
         }
         public void clearScreen()
         {
-            for (int variable1 = 0; variable1 < nHeight; variable1++)
-            {
-                for (int variable2 = 0; variable2 < nWidth; variable2++)
-                {
-                    array[variable1, variable2] = " ";
-                }
-            }
+            layout = new Dictionary<String, Layout>();
+            links = new Dictionary<int, LinkDirections>();
+            linkCnt = 0;
         }
         public void DrawComponents()
         {
-            for (int variable1 = 0; variable1 < nHeight; variable1++)
+            foreach(LinkDirections ld in links.Values){
+                connectGates(ld.x, ld.y, ld.directions, ld.offset);
+            }
+            foreach (Layout lay in layout.Values)
             {
-                for (int variable2 = 0; variable2 < nWidth; variable2++)
+                int x = start + lay.ycord * height + 1;
+                int y = start + lay.xcord * width + error;
+
+                switch (lay.type)
                 {
-                    int x = start + variable2 * height + 1;
-                    int y = start + variable1 * width + error;
-                    String imageFolder ="E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
-                    switch (array[variable1, variable2])
-                    {
-                        case "A":
-                            addImage(x, y, imageFolder + "and.jpg");
-                            break;
-                        case "O":
-                            addImage(x, y, imageFolder + "or.jpg");
-                            break;
-                        case "NA":
-                            addImage(x, y, imageFolder + "nand.jpg");
-                            break;
-                        case "NO":
-                            addImage(x, y, imageFolder + "nor.jpg");
-                            break;
-                        case "N":
-                            addImage(x, y, imageFolder + "not.jpg");
-                            break;
-                        case "XO":
-                            addImage(x, y, imageFolder + "xor.jpg");
-                            break;
-                        case "XN":
-                            addImage(x, y, imageFolder + "xnor.jpg");
-                            break;
-                    }
+                    case Gates.AND:
+                        addImage(x, y, "and.jpg");
+                        break;
+                    case Gates.OR:
+                        addImage(x, y, "or.jpg");
+                        break;
+                    case Gates.NAND:
+                        addImage(x, y, "nand.jpg");
+                        break;
+                    case Gates.NOR:
+                        addImage(x, y, "nor.jpg");
+                        break;
+                    case Gates.NOT:
+                        addImage(x, y, "not.jpg");
+                        break;
+                    case Gates.EXOR:
+                        addImage(x, y, "xor.jpg");
+                        break;
+                    /*case "XN":
+                        addImage(x, y, imageFolder + "xnor.jpg");
+                        break;*/
                 }
             }
         }
-        public void addImage(int x, int y, String imageLocation)
+        
+      
+        public void addImage(int x, int y, String image)
         {
+            String imageLocation = imageFolder + image;
             PictureBox box = new PictureBox();
             box.Location = new Point(x, y);
             box.Image = Image.FromFile(imageLocation);
             box.Size = new Size(width - 1, height - error);
             box.Parent = this;
         }
+
+        //replace
         public void addGates(String gate, String row, String col)
         {
             //row and col should be of the format R0 and C1 
@@ -136,23 +143,41 @@ namespace DigitalCircuitDesign
             int y = Convert.ToInt32(col.Substring(1));
             if (x >= 0 && y >= 0 && x < nHeight && y < nWidth)
             {
+                Gates type = new Gates();
                 switch (gate)
                 {
-                    case "and": array[x, y] = "A"; break;
-                    case "or": array[x, y] = "O"; break;
-                    case "nand": array[x, y] = "NA"; break;
-                    case "nor": array[x, y] = "NO"; break;
-                    case "not": array[x, y] = "N"; break;
-                    case "xor": array[x, y] = "XO"; break;
-                    case "xnor": array[x, y] = "XN"; break;
+                    case "and": type = Gates.AND; break;
+                    case "or": type = Gates.OR; break;
+                    case "nand": type = Gates.NAND; break;
+                    case "nor": type = Gates.NOR; break;
+                    case "not": type = Gates.NOT; break;
+                    case "xor": type = Gates.EXOR; break;
+                    //case "xnor": array[x, y] = "XN"; break;
                 }
+                layout.Add(row+col, new Layout(x, y, type));
             }
             this.Invalidate();
         }
-        public void DrawLinks(int startx,int starty,int endx,int endy){    
+
+        //add
+        public void addLinks(String rowStart, String colStart, String rowEnd, String colEnd)
+        {
+            int xStart = Convert.ToInt32(rowStart.Substring(1));
+            int yStart = Convert.ToInt32(colStart.Substring(1));
+            int xEnd = Convert.ToInt32(rowEnd.Substring(1));
+            int yEnd = Convert.ToInt32(colEnd.Substring(1));
+            LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
+            links.Add(linkCnt,ld);
+            layout[rowStart + colStart].output.Add(linkCnt);
+            layout[rowEnd + colEnd].input.Add(linkCnt);
+        }
+
+          
+        //add
+       /* public void DrawLinks(int startx,int starty,int endx,int endy){    
             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
             connectGates(startx,starty, ld.directions, ld.offset);
-        }
+        }*/
         public void connectGates(int rowS, int colS, char[] path, int[] offset)
         {
             //lasth and v offset keep track of recent offset difference
@@ -381,32 +406,46 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            DrawLinks(0,1,4,5);
-           /*addGates("and", "R0", "C0");
-            addGates("or", "R0", "C1");
-            addGates("not", "R0", "C2");
-            addGates("xor", "R0", "C3");
-            addGates("nand", "R0", "C4");
-            addGates("nor", "R0", "C5");
-            addGates("xnor", "R0", "C10");
-            addGates("xnor", "R7", "C19");*/
+            
+            
+            addGates("and", "R0", "C0");
+            addGates("nor", "R5", "C8");
+            addLinks("R0", "C0", "R5", "C8");
+            //addGates("or", "R0", "C1");
+            //addGates("not", "R0", "C2");
+            //addGates("xor", "R0", "C3");
+            //addGates("nand", "R0", "C4");
+            
+            //addGates("xnor", "R0", "C10");
+            //addGates("xnor", "R7", "C19");
         }
 
 
     }
-
+    //Add
     public class LinkDirections
     {
+        //To find the position of the gate subtrat 1 from Y
+        public int x;
+        public int y;
+        public int destX;
+        public int destY;
+
         public int[] offset;
         public char[] directions;
 
-        public LinkDirections(int size)
+        public LinkDirections(int size, int x, int y, int xd, int yd)
         {
             this.offset = new int[size];
             this.directions = new char[size];
+            this.x = x;
+            this.y = y;
+            this.destX = xd;
+            this.destY = yd;
         }
     }
 
+    //Add
     public class ConnectLink
     {
         Dictionary<int, Dictionary<int, int>> graph;
@@ -494,9 +533,9 @@ namespace DigitalCircuitDesign
                         }
                 color[temp] = 2;
             }
-
+            
             int totalLen = dist[dest];
-            LinkDirections ld = new LinkDirections(totalLen);
+            LinkDirections ld = new LinkDirections(totalLen,x1,y1,x2,y2);
             int next = dest;
             int j = totalLen - 1;
             while (next != start)
@@ -519,4 +558,25 @@ namespace DigitalCircuitDesign
             return ld;
         }
     }
+
+    //Add
+    class Layout
+    {
+        public int xcord;
+        public int ycord;
+        public Gates type;
+        public ArrayList input;
+        public ArrayList output;
+
+        public Layout(int x, int y, Gates type)
+        {
+            this.xcord = x;
+            this.ycord = y;
+            this.type = type;
+            this.input = new ArrayList();
+            this.output = new ArrayList();
+        }
+    }
+
+    enum Gates{AND,OR,EXOR,NOT,NAND,NOR};
 }
