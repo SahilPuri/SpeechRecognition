@@ -12,6 +12,7 @@ using System.Speech.Recognition;
 
 namespace DigitalCircuitDesign
 {
+    
     public partial class Form1 : Form
     {
         int nWidth = 20;
@@ -20,7 +21,7 @@ namespace DigitalCircuitDesign
         int width = 60;
         int height = 60;
         int error = 10;
-        static String imageFolder = "C:\\Users\\Sail\\Documents\\GitHub\\SpeechRecognition\\DigitalCircuitDesign\\images\\";
+        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
@@ -28,6 +29,15 @@ namespace DigitalCircuitDesign
         ConnectLink clObject;
         int linkCnt = 0;
         /*End of State of the System*/
+        
+        /*state history*/
+        StackData[] arr = new StackData[5];
+        int currStart = 0;
+        int currEnd = 0;
+
+        StackData[] arr2 = new StackData[5];
+        int currStart2 = 0;
+        int currEnd2 = 0;
         
         public Form1()
         {
@@ -154,6 +164,7 @@ namespace DigitalCircuitDesign
                     case "xor": type = Gates.EXOR; break;
                     //case "xnor": array[x, y] = "XN"; break;
                 }
+                addToUndoStack();
                 layout.Add(row+col, new Layout(x, y, type));
             }
             this.Invalidate();
@@ -162,6 +173,7 @@ namespace DigitalCircuitDesign
         //add
         public void addLinks(String rowStart, String colStart, String rowEnd, String colEnd)
         {
+            addToUndoStack();
             int xStart = Convert.ToInt32(rowStart.Substring(1));
             int yStart = Convert.ToInt32(colStart.Substring(1));
             int xEnd = Convert.ToInt32(rowEnd.Substring(1));
@@ -419,8 +431,111 @@ namespace DigitalCircuitDesign
             //addGates("xnor", "R0", "C10");
             //addGates("xnor", "R7", "C19");
         }
+        private void undo()
+        {
+            removeFromUndoStack();
+        }
+        private void redo()
+        {
+            removeFromRedoStack();
+        }
+        public void addToUndoStack()
+        {
+            StackData s = new StackData(new Dictionary<string, Layout>(layout),
+                new Dictionary<int, LinkDirections>(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
+            if (currEnd - currStart +1 >= 5)
+            {
+                currStart++;
+            }
+            arr[(currEnd) % 5] = s;
+            currEnd++;
+            textBox1.Text+=(currEnd+" "+currStart+"@@@");
+        }
+        private void addToUndoStack(StackData s)
+        {
+            if (currEnd - currStart +1 >= 5)
+            {
+                currStart++;
+            }
+            arr[(currEnd) % 5] = s;
+            currEnd++;
+        }
+        public void removeFromUndoStack()
+        {
+            if (currEnd > 0)
+            {
+                StackData temp = arr[(currEnd - 1) % 5];
+                addToRedoStack(temp);
+                currEnd--;
+                textBox1.Text += currEnd+"@@@";
+                //get the prev state
+                if (temp != null)
+                {
+                    this.layout = new Dictionary<string, Layout>(temp.layout);
+                    this.links = new Dictionary<int, LinkDirections>(temp.links);
+                    this.clObject = new ConnectLink(temp.clObject.m, temp.clObject.n, temp.clObject.maxLinks);
+                    this.linkCnt = temp.linkCnt;
+                    this.Invalidate();
+                }
+                else
+                {
+                    textBox1.Text += "null" + "@@@";
+                }
+            }
+        }
+        private void addToRedoStack(StackData s)
+        {
+            if (currEnd2 - currStart2+1 >= 5)
+            {
+                currStart2++;
+            }
+            arr[(currEnd2) % 5] = s;
+            currEnd2++;
+        }
+        public void removeFromRedoStack()
+        {
+            if (currEnd2 > 0 )
+            {
+                StackData temp = arr2[(currEnd2 - 1) % 5];
+                addToUndoStack(temp);
+                currEnd2--;
 
+                //get the prev state
+                if (temp != null)
+                {
+                    layout = temp.layout;
+                    links = temp.links;
+                    clObject = temp.clObject;
+                    linkCnt = temp.linkCnt;
+                    this.Invalidate();
+                }
+            }
+        }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            undo();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            redo();
+        }
+    }
+
+    class StackData
+    {
+        public Dictionary<String, Layout> layout;
+        public Dictionary<int, LinkDirections> links;
+        public ConnectLink clObject;
+        public int linkCnt = 0;
+        public StackData(Dictionary<String, Layout> layout1, Dictionary<int, LinkDirections> links1, ConnectLink clObject1, int linkCnt1)
+        {
+            layout = layout1;
+            links = links1;
+            clObject = clObject1;
+            linkCnt = linkCnt1;
+        }
     }
     //Add
     public class LinkDirections
@@ -448,10 +563,10 @@ namespace DigitalCircuitDesign
     //Add
     public class ConnectLink
     {
-        Dictionary<int, Dictionary<int, int>> graph;
-        private int m;
-        private int n;
-        private int maxLinks;
+        public Dictionary<int, Dictionary<int, int>> graph;
+        public int m;
+        public int n;
+        public int maxLinks;
 
 
         public ConnectLink(int m, int n, int max)
