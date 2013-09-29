@@ -39,6 +39,9 @@ namespace DigitalCircuitDesign
         int currStart2 = 0;
         int currEnd2 = 0;
         
+        PictureBox[,] pic=new PictureBox[100,100];
+        
+
         public Form1()
         {
             InitializeComponent();
@@ -47,6 +50,7 @@ namespace DigitalCircuitDesign
         }
         protected override void OnPaint(PaintEventArgs e)
         {
+            clearAllImages();
             DrawGrid();
             DrawComponents();
             //RecognizeSpeech();
@@ -110,22 +114,22 @@ namespace DigitalCircuitDesign
                 switch (lay.type)
                 {
                     case Gates.AND:
-                        addImage(x, y, "and.jpg");
+                        addImage(x, y,lay.xcord,lay.ycord, "and.jpg");
                         break;
                     case Gates.OR:
-                        addImage(x, y, "or.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "or.jpg");
                         break;
                     case Gates.NAND:
-                        addImage(x, y, "nand.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "nand.jpg");
                         break;
                     case Gates.NOR:
-                        addImage(x, y, "nor.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "nor.jpg");
                         break;
                     case Gates.NOT:
-                        addImage(x, y, "not.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "not.jpg");
                         break;
                     case Gates.EXOR:
-                        addImage(x, y, "xor.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "xor.jpg");
                         break;
                     /*case "XN":
                         addImage(x, y, imageFolder + "xnor.jpg");
@@ -133,16 +137,32 @@ namespace DigitalCircuitDesign
                 }
             }
         }
-        
-      
-        public void addImage(int x, int y, String image)
+        public void clearAllImages()
         {
-            String imageLocation = imageFolder + image;
-            PictureBox box = new PictureBox();
-            box.Location = new Point(x, y);
-            box.Image = Image.FromFile(imageLocation);
-            box.Size = new Size(width - 1, height - error);
-            box.Parent = this;
+            for (int i = 0; i < 100; i++)
+            {
+                for (int j = 0; j < 100;j++ )
+                {
+                    if(pic[i,j]!=null)
+                    pic[i,j].Image = null;
+                }
+            }
+            
+        }
+
+        public void addImage(int x, int y, int xcord,int ycord,String image)
+        {
+                String imageLocation = imageFolder + image;
+                PictureBox box=pic[xcord, ycord];
+                if (box == null)
+                {
+                    box = new PictureBox();
+                    box.Location = new Point(x, y);
+                    box.Size = new Size(width - 1, height - error);
+                    box.Parent = this;
+                    pic[xcord, ycord] = box;
+                }
+                box.Image = Image.FromFile(imageLocation);
         }
 
         //replace
@@ -418,11 +438,10 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            
-            
+
             addGates("and", "R0", "C0");
-            //addGates("nor", "R5", "C8");
-            //addLinks("R0", "C0", "R5", "C8");
+            addGates("nor", "R5", "C8");
+            addLinks("R0", "C0", "R5", "C8");
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
             //addGates("xor", "R0", "C3");
@@ -433,10 +452,12 @@ namespace DigitalCircuitDesign
         }
         private void undo()
         {
+            
             removeFromUndoStack();
         }
         private void redo()
         {
+            
             removeFromRedoStack();
         }
         public void addToUndoStack()
@@ -449,7 +470,6 @@ namespace DigitalCircuitDesign
             }
             arr[(currEnd) % 5] = s;
             currEnd++;
-            textBox1.Text+=(currEnd+" "+currStart+"@@@");
         }
         private void addToUndoStack(StackData s)
         {
@@ -462,12 +482,11 @@ namespace DigitalCircuitDesign
         }
         public void removeFromUndoStack()
         {
-            if (currEnd > 0)
+            if (currEnd >currStart)
             {
+                addToRedoStack();
                 StackData temp = arr[(currEnd - 1) % 5];
-                addToRedoStack(temp);
                 currEnd--;
-                textBox1.Text += currEnd+"@@@";
                 //get the prev state
                 if (temp != null)
                 {
@@ -477,11 +496,18 @@ namespace DigitalCircuitDesign
                     this.linkCnt = temp.linkCnt;
                     this.Invalidate();
                 }
-                else
-                {
-                    textBox1.Text += "null" + "@@@";
-                }
             }
+        }
+        private void addToRedoStack()
+        {
+            StackData s = new StackData(CloneDictionaryLayout(layout),
+                CloneDictionaryLinks(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
+            if (currEnd2 - currStart2 + 1 >= 5)
+            {
+                currStart2++;
+            }
+            arr2[(currEnd2) % 5] = s;
+            currEnd2++;
         }
         private void addToRedoStack(StackData s)
         {
@@ -489,24 +515,24 @@ namespace DigitalCircuitDesign
             {
                 currStart2++;
             }
-            arr[(currEnd2) % 5] = s;
+            arr2[(currEnd2) % 5] = s;
             currEnd2++;
         }
         public void removeFromRedoStack()
         {
-            if (currEnd2 > 0 )
+            if (currEnd2 > currStart2 )
             {
+                addToUndoStack();
                 StackData temp = arr2[(currEnd2 - 1) % 5];
-                addToUndoStack(temp);
                 currEnd2--;
 
                 //get the prev state
                 if (temp != null)
                 {
-                    layout = temp.layout;
-                    links = temp.links;
-                    clObject = temp.clObject;
-                    linkCnt = temp.linkCnt;
+                    this.layout = CloneDictionaryLayout(temp.layout);
+                    this.links = CloneDictionaryLinks(temp.links);
+                    this.clObject = new ConnectLink(temp.clObject.m, temp.clObject.n, temp.clObject.maxLinks);
+                    this.linkCnt = temp.linkCnt;
                     this.Invalidate();
                 }
             }
@@ -514,6 +540,7 @@ namespace DigitalCircuitDesign
 
         private void button2_Click(object sender, EventArgs e)
         {
+            
             undo();
         }
 
