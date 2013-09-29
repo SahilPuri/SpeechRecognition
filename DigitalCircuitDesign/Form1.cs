@@ -421,8 +421,8 @@ namespace DigitalCircuitDesign
             
             
             addGates("and", "R0", "C0");
-            addGates("nor", "R5", "C8");
-            addLinks("R0", "C0", "R5", "C8");
+            //addGates("nor", "R5", "C8");
+            //addLinks("R0", "C0", "R5", "C8");
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
             //addGates("xor", "R0", "C3");
@@ -441,8 +441,8 @@ namespace DigitalCircuitDesign
         }
         public void addToUndoStack()
         {
-            StackData s = new StackData(new Dictionary<string, Layout>(layout),
-                new Dictionary<int, LinkDirections>(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
+            StackData s = new StackData(CloneDictionaryLayout(layout),
+                CloneDictionaryLinks(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
             if (currEnd - currStart +1 >= 5)
             {
                 currStart++;
@@ -471,8 +471,8 @@ namespace DigitalCircuitDesign
                 //get the prev state
                 if (temp != null)
                 {
-                    this.layout = new Dictionary<string, Layout>(temp.layout);
-                    this.links = new Dictionary<int, LinkDirections>(temp.links);
+                    this.layout = CloneDictionaryLayout(temp.layout);
+                    this.links = CloneDictionaryLinks(temp.links);
                     this.clObject = new ConnectLink(temp.clObject.m, temp.clObject.n, temp.clObject.maxLinks);
                     this.linkCnt = temp.linkCnt;
                     this.Invalidate();
@@ -521,6 +521,28 @@ namespace DigitalCircuitDesign
         {
             redo();
         }
+        private static Dictionary<string,Layout> CloneDictionaryLayout(Dictionary<string,Layout> original) 
+        {
+            Dictionary<string, Layout> ret = new Dictionary<string, Layout>(original.Count,
+                                                                    original.Comparer);
+            foreach (KeyValuePair<string, Layout> entry in original)
+            {
+                Layout value = entry.Value.copy(entry.Value);
+                ret.Add(entry.Key, value);
+            }
+            return ret;
+        }
+        public static Dictionary<int, LinkDirections> CloneDictionaryLinks(Dictionary<int, LinkDirections> original)
+        {
+            Dictionary<int, LinkDirections> ret = new Dictionary<int, LinkDirections>(original.Count,
+                                                                    original.Comparer);
+            foreach (KeyValuePair<int, LinkDirections> entry in original)
+            {
+                LinkDirections value = entry.Value.copy(entry.Value);
+                ret.Add(entry.Key, value);
+            }
+            return ret;
+        }
     }
 
     class StackData
@@ -549,6 +571,10 @@ namespace DigitalCircuitDesign
         public int[] offset;
         public char[] directions;
 
+        public LinkDirections()
+        {
+        }
+
         public LinkDirections(int size, int x, int y, int xd, int yd)
         {
             this.offset = new int[size];
@@ -557,6 +583,25 @@ namespace DigitalCircuitDesign
             this.y = y;
             this.destX = xd;
             this.destY = yd;
+        }
+        public LinkDirections copy(LinkDirections input)
+        {
+            LinkDirections s = new LinkDirections();
+            s.x = input.x;
+            s.y = input.y;
+            s.destX = input.destX;
+            s.destY = input.destY;
+            s.offset = new int[input.offset.Length];
+            for (int i = 0; i < input.offset.Length; i++)
+            {
+                s.offset[i] = input.offset[i];
+            }
+            s.directions = new char[input.directions.Length];
+            for (int i = 0; i < input.directions.Length; i++)
+            {
+                s.directions[i] = input.directions[i];
+            }
+            return s;
         }
     }
 
@@ -683,6 +728,8 @@ namespace DigitalCircuitDesign
         public ArrayList input;
         public ArrayList output;
 
+        public Layout(){
+        }
         public Layout(int x, int y, Gates type)
         {
             this.xcord = x;
@@ -690,6 +737,24 @@ namespace DigitalCircuitDesign
             this.type = type;
             this.input = new ArrayList();
             this.output = new ArrayList();
+        }
+        public Layout copy(Layout input)
+        {
+        Layout n=new Layout();
+        n.xcord = input.xcord;
+        n.ycord = input.ycord;
+        n.type = input.type;
+        n.input = new ArrayList(input.input.Count);
+        for (int i = 0; i < input.input.Count; i++)
+        {
+            n.input.Insert(i,input.input[i]);
+        }
+        n.output = new ArrayList(input.output.Count);
+        for (int i = 0; i < input.output.Count; i++)
+        {
+            n.output.Insert(i, input.output[i]);
+        }
+        return n;
         }
     }
 
