@@ -216,8 +216,8 @@ namespace DigitalCircuitDesign
             int lasthoffset=0, lastvoffset=0;
             int curry = rowS * height + start, currx = colS * width + start;
             //Method implement to add connection between gates
-            //additional 4 for start, and 3 arrow points
-            Point[] points =new Point[path.Length+4];
+            //additional 3 for start,2 for end, + path length ; //4 for start, and 3 arrow points
+            Point[] points =new Point[path.Length+5];
             if (path.Length > 1)
             {
                 if (path[0] == 'L' || path[0] == 'R')
@@ -231,10 +231,26 @@ namespace DigitalCircuitDesign
                     lasthoffset = offset[0];
                 }
             }
-            points[0] = new Point(currx, curry);
+            //connecting gate with first point (output)
+            Point temp;
+            if (true)
+            {
+                //comp is down
+                temp = new Point(currx, curry + offset[0] + (height / 2));
+            }
+            else
+            {
+                //comp is above
+                    temp = new Point(currx, curry-offset[0]-(height/2));
+            }
+            points[0] = new Point(currx-(width/2),temp.Y);
+            points[1] = temp;
+            //rest of the points
+            points[2] = new Point(currx, curry);
 
+            int i;
             //calculate remaining points
-            for (int i = 0; i < path.Length; i++)
+            for (i = 0; i < path.Length; i++)
             {
                 int nextOffset=(i!=path.Length-1 && 
                     (((path[i]=='L' || path[i]=='R') && (path[i+1]=='U' || path[i+1]=='D')) || 
@@ -247,9 +263,27 @@ namespace DigitalCircuitDesign
                     case 'U': curry = curry-lastvoffset-height +nextOffset; lastvoffset = nextOffset; break;
                     case 'D': curry = curry-lastvoffset+height +nextOffset; lastvoffset = nextOffset; break;
                 }
-                points[i + 1] = new Point(currx,curry);
+                points[i + 3] = new Point(currx,curry);
             }
-            int arrowSize = 5;
+            //connect last point with the gate
+            if (true)
+            {
+                //comp is down
+                points[i + 3] = new Point(currx, curry + 10);
+                i++;
+                points[i + 3] = new Point(currx + (width / 2), curry + (height / 2));
+            }
+            else
+            {
+                //comp is up
+                points[i + 3] = new Point(currx, curry - 10);
+                i++;
+                points[i + 3] = new Point(currx + (width / 2), curry - (height / 2));
+            }
+            
+            //textBox1.Text += points[i + 3].X;
+            /*
+            int arrowSize = 0;
             int x = points[path.Length].X;
             int y = points[path.Length].Y;
             // Arrow
@@ -275,7 +309,7 @@ namespace DigitalCircuitDesign
             points[path.Length+2]=new Point(x + arrowSize, y - arrowSize);
             points[path.Length+3]=new Point(x , y);break;
         }
-            
+            */
             Pen myPen = new Pen(Color.Blue);
             myPen.Width = 3;
             this.CreateGraphics().DrawLines(myPen, points);
