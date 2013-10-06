@@ -259,19 +259,20 @@ namespace DigitalCircuitDesign
                 //comp is down
                 temp = new Point(currx, curry + offset[0] + (height / 2));
             }
-            else
+            /*else
             {
                 //comp is above
                 temp = new Point(currx, curry - offset[0] - (height / 2));
-            }
-            points[0] = new Point(currx - (width / 2), temp.Y);
-            points[1] = temp;
+            }*/
+            int i = 0;
+            points[i++] = new Point(currx - (width / 2), temp.Y);
+            points[i++] = temp;
             //rest of the points
-            points[2] = new Point(currx, curry);
+            points[i++] = new Point(currx, curry);
 
-            int i;
+            
             //calculate remaining points
-            for (i = 0; i < path.Length; i++)
+            for (i=0; i < path.Length; i++)
             {
                 int nextOffset = (i != path.Length - 1 &&
                     (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
@@ -284,9 +285,29 @@ namespace DigitalCircuitDesign
                     case 'U': curry = curry - lastvoffset - height + nextOffset; lastvoffset = nextOffset; break;
                     case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
                 }
+                //make the second point void if component is upwards and first point is downwards
+                if (i == 0 && i!=path.Length-1 && currx == points[i + 2].X)
+                {
+                        points[i + 2] = new Point(currx, curry);
+                }
+                else if (i == (path.Length - 1) && currx==points[i+2].X)
+                {
+                    if (points[i + 2].Y < curry)
+                    {
+                        //component is down
+                        points[i + 2] = new Point(currx, curry);
+                    }
+                    else
+                    {
+                        //component is up
+                        currx = points[i + 2].X;
+                        curry = points[i + 2].Y;
+                    }
+                }
                 points[i + 3] = new Point(currx, curry);
-            }
+              }
             //connect last point with the gate
+            
             if (curry==((height*rowE)+start))
             {
                 //comp is down
@@ -297,11 +318,12 @@ namespace DigitalCircuitDesign
             else
             {
                 //comp is up
+                textBox1.Text += "HHH";
                 points[i + 3] = new Point(currx, curry - (height/4));
                 i++;
                 points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2)-5));
             }
-
+            
             //textBox1.Text += points[i + 3].X;
             /*
             int arrowSize = 0;
@@ -806,6 +828,10 @@ namespace DigitalCircuitDesign
             addGates("nand", "R5", "C5");
             addLinks("R5", "C3", "R5", "C5");
 
+            addGates("and", "R5", "C0");
+            addGates("nor", "R4", "C1");
+            addLinks("R5", "C0", "R4", "C1");
+            
             //failed test 
             /*addGates("xor", "R5", "C9");
             addGates("nand", "R5", "C10");
