@@ -7,21 +7,33 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using System.Speech.Recognition;
+using System.Windows.Forms.VisualStyles;
 
 namespace DigitalCircuitDesign
-{
-    
+{  
     public partial class Form1 : Form
     {
-        int nWidth = 20;
-        int nHeight = 8;
+
+        SecondUIThreadForm secondThreadForm;
+        bool commandReady = false;
+        string historyOfCommands = "Command History: \r\n";
+        string yesNoForRemoveGateOrLink;
+        
+
+        int nWidth = 17;
+        int nHeight = 7;
         int start = 50;
-        int width = 60;
-        int height = 60;
+        int width = 70;
+        int height = 70;
         int error = 10;
-        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
+        //also modified in constructor
+        int picHeightError = 10;
+        int outPinWidth = 15;
+        int inPinWidth = 15;
+        static String imageFolder = "E:/Workspace/VisualStudio/SpeechRecognition-Pratik/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
@@ -38,15 +50,18 @@ namespace DigitalCircuitDesign
         StackData[] arr2 = new StackData[5];
         int currStart2 = 0;
         int currEnd2 = 0;
-        
-        PictureBox[,] pic=new PictureBox[100,100];
-        
+
+        PictureBox[,] pic = new PictureBox[100, 100];
 
         public Form1()
         {
+            picHeightError += (height-55)/2;
+            outPinWidth+=(width-70)/2;
+            inPinWidth += (width-70)/2;
             InitializeComponent();
             clearScreen();
             clObject = new ConnectLink(nHeight, nWidth,2);
+            textBox2.Text = historyOfCommands;
         }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -59,6 +74,7 @@ namespace DigitalCircuitDesign
         }
         public void DrawGrid()
         {
+            this.BackColor = Color.White;
             System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Black);
             System.Drawing.Graphics formGraphics = this.CreateGraphics();
 
@@ -103,18 +119,19 @@ namespace DigitalCircuitDesign
         }
         public void DrawComponents()
         {
-            foreach(LinkDirections ld in links.Values){
-                connectGates(ld.x, ld.y, ld.directions, ld.offset);
+            foreach (LinkDirections ld in links.Values)
+            {
+                connectGates(ld.x, ld.y, ld.destX,ld.destY, ld.directions, ld.offset);
             }
             foreach (Layout lay in layout.Values)
             {
-                int x = start + lay.ycord * height + 1;
-                int y = start + lay.xcord * width + error;
+                int y = start + lay.xcord * height;
+                int x = start + lay.ycord * width;
 
                 switch (lay.type)
                 {
                     case Gates.AND:
-                        addImage(x, y,lay.xcord,lay.ycord, "and.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "and.jpg");
                         break;
                     case Gates.OR:
                         addImage(x, y, lay.xcord, lay.ycord, "or.jpg");
@@ -141,29 +158,29 @@ namespace DigitalCircuitDesign
         {
             for (int i = 0; i < 100; i++)
             {
-                for (int j = 0; j < 100;j++ )
+                for (int j = 0; j < 100; j++)
                 {
-                    if(pic[i,j]!=null)
-                    pic[i,j].Image = null;
+                    if (pic[i, j] != null)
+                        pic[i, j].Image = null;
                 }
             }
-            
-        }
 
-        public void addImage(int x, int y, int xcord,int ycord,String image)
-        {
-                String imageLocation = imageFolder + image;
-                PictureBox box=pic[xcord, ycord];
-                if (box == null)
-                {
-                    box = new PictureBox();
-                    box.Location = new Point(x, y);
-                    box.Size = new Size(width - 1, height - error);
-                    box.Parent = this;
-                    pic[xcord, ycord] = box;
-                }
-                box.Image = Image.FromFile(imageLocation);
         }
+        public void addImage(int x, int y, int xcord, int ycord, String image)
+        {
+            String imageLocation = imageFolder + image;
+            PictureBox box = pic[xcord, ycord];
+            if (box == null)
+            {
+                box = new PictureBox();
+                box.Location = new Point(x+inPinWidth, y+picHeightError);
+                box.Size = new Size(width-inPinWidth-outPinWidth, height - (picHeightError*2));
+                box.Parent = this;  
+                pic[xcord, ycord] = box;
+            }
+            box.Image = Image.FromFile(imageLocation);
+        }
+        
 
         //replace
         public void addGates(String gate, String row, String col)
@@ -182,6 +199,7 @@ namespace DigitalCircuitDesign
                     case "nor": type = Gates.NOR; break;
                     case "not": type = Gates.NOT; break;
                     case "xor": type = Gates.EXOR; break;
+                   
                     //case "xnor": array[x, y] = "XN"; break;
                 }
                 addToUndoStack();
@@ -200,8 +218,11 @@ namespace DigitalCircuitDesign
             int yEnd = Convert.ToInt32(colEnd.Substring(1));
             LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
             links.Add(linkCnt,ld);
+            linkCnt++;
             layout[rowStart + colStart].output.Add(linkCnt);
             layout[rowEnd + colEnd].input.Add(linkCnt);
+
+            this.Invalidate();
         }
 
           
@@ -210,14 +231,14 @@ namespace DigitalCircuitDesign
             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
             connectGates(startx,starty, ld.directions, ld.offset);
         }*/
-        public void connectGates(int rowS, int colS, char[] path, int[] offset)
+        public void connectGates(int rowS, int colS, int rowE,int colE, char[] path, int[] offset)
         {
             //lasth and v offset keep track of recent offset difference
-            int lasthoffset=0, lastvoffset=0;
+            int lasthoffset = 0, lastvoffset = 0;
             int curry = rowS * height + start, currx = colS * width + start;
             //Method implement to add connection between gates
             //additional 3 for start,2 for end, + path length ; //4 for start, and 3 arrow points
-            Point[] points =new Point[path.Length+5];
+            Point[] points = new Point[path.Length + 5];
             if (path.Length > 1)
             {
                 if (path[0] == 'L' || path[0] == 'R')
@@ -241,9 +262,9 @@ namespace DigitalCircuitDesign
             else
             {
                 //comp is above
-                    temp = new Point(currx, curry-offset[0]-(height/2));
+                temp = new Point(currx, curry - offset[0] - (height / 2));
             }
-            points[0] = new Point(currx-(width/2),temp.Y);
+            points[0] = new Point(currx - (width / 2), temp.Y);
             points[1] = temp;
             //rest of the points
             points[2] = new Point(currx, curry);
@@ -252,35 +273,35 @@ namespace DigitalCircuitDesign
             //calculate remaining points
             for (i = 0; i < path.Length; i++)
             {
-                int nextOffset=(i!=path.Length-1 && 
-                    (((path[i]=='L' || path[i]=='R') && (path[i+1]=='U' || path[i+1]=='D')) || 
-                    ((path[i]=='U' || path[i]=='D') && (path[i+1]=='L' || path[i+1]=='R'))))?offset[i+1]:0;
+                int nextOffset = (i != path.Length - 1 &&
+                    (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
+                    ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
                 //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {
-                    case 'L': currx =currx-lasthoffset-width + nextOffset; lasthoffset=nextOffset; break;
-                    case 'R': currx = currx-lasthoffset+width + nextOffset; lasthoffset = nextOffset; break;
-                    case 'U': curry = curry-lastvoffset-height +nextOffset; lastvoffset = nextOffset; break;
-                    case 'D': curry = curry-lastvoffset+height +nextOffset; lastvoffset = nextOffset; break;
+                    case 'L': currx = currx - lasthoffset - width + nextOffset; lasthoffset = nextOffset; break;
+                    case 'R': currx = currx - lasthoffset + width + nextOffset; lasthoffset = nextOffset; break;
+                    case 'U': curry = curry - lastvoffset - height + nextOffset; lastvoffset = nextOffset; break;
+                    case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
                 }
-                points[i + 3] = new Point(currx,curry);
+                points[i + 3] = new Point(currx, curry);
             }
             //connect last point with the gate
-            if (true)
+            if (curry==((height*rowE)+start))
             {
                 //comp is down
-                points[i + 3] = new Point(currx, curry + 10);
+                points[i + 3] = new Point(currx, curry + (height/4));
                 i++;
-                points[i + 3] = new Point(currx + (width / 2), curry + (height / 2));
+                points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2)-5));
             }
             else
             {
                 //comp is up
-                points[i + 3] = new Point(currx, curry - 10);
+                points[i + 3] = new Point(currx, curry - (height/4));
                 i++;
-                points[i + 3] = new Point(currx + (width / 2), curry - (height / 2));
+                points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2)-5));
             }
-            
+
             //textBox1.Text += points[i + 3].X;
             /*
             int arrowSize = 0;
@@ -314,6 +335,7 @@ namespace DigitalCircuitDesign
             myPen.Width = 3;
             this.CreateGraphics().DrawLines(myPen, points);
         }
+
         
         public void DrawLShapeLine(System.Drawing.Graphics g, int intMarginLeft, int intMarginTop, int intWidth, int intHeight)
         {
@@ -349,9 +371,12 @@ namespace DigitalCircuitDesign
             recognizer.SetInputToDefaultAudioDevice();
 
             GrammarBuilder clear = new GrammarBuilder("Clear");
- 
+            GrammarBuilder undo = new GrammarBuilder("Undo");
+            GrammarBuilder redo = new GrammarBuilder("Redo");
+            GrammarBuilder exit = new GrammarBuilder("Exit");
+            
             GrammarBuilder insert = new GrammarBuilder("Insert");
-            Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand" });
+            Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand", "source", "output" });
             Choices columns = new Choices(new string[] { "zero","one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
             Choices rows = new Choices(new string[] { "zero" ,"one", "two", "three", "four", "five", "six", "seven", "eight", "nine" });
             //Choices orientation = new Choices(new string[] { "left", "right", "up", "down" });
@@ -360,26 +385,64 @@ namespace DigitalCircuitDesign
             insert.Append(rows);
             insert.Append("C");
             insert.Append(columns);
-            
             //insert.Append("towards");
             //insert.Append(orientation);
 
             GrammarBuilder connect = new GrammarBuilder("Connect");
-            connect.Append("output");
-            connect.Append(columns);
+            //connect.Append("output");
+            connect.Append("R");
             connect.Append(rows);
-            connect.Append("to");
-            connect.Append("input");
+            connect.Append("C");
             connect.Append(columns);
+            //connect.Append("to");
+            //connect.Append("input");
+            connect.Append("R");
             connect.Append(rows);
+            connect.Append("C");
+            connect.Append(columns);
+
+            GrammarBuilder removeGate = new GrammarBuilder("Remove");
+            removeGate.Append("gate");
+            removeGate.Append("R");
+            removeGate.Append(rows);
+            removeGate.Append("C");
+            removeGate.Append(columns);
+            
+            GrammarBuilder removeLink = new GrammarBuilder("Remove");
+            removeLink.Append("link");
+            removeLink.Append("R");
+            removeLink.Append(rows);
+            removeLink.Append("C");
+            removeLink.Append(columns);
+            removeLink.Append("R");
+            removeLink.Append(rows);
+            removeLink.Append("C");
+            removeLink.Append(columns);
+            
+
+
+            GrammarBuilder commandStart = new GrammarBuilder("Command");
+            
             
             Grammar _clear_grammar = new Grammar(clear);
             Grammar _insert_grammar = new Grammar(insert);
             Grammar _connect_grammar = new Grammar(connect);
+            Grammar _command_Start = new Grammar(commandStart);
+            Grammar _undo = new Grammar(undo);
+            Grammar _redo = new Grammar(redo);
+            Grammar _exit = new Grammar(exit);
+            Grammar _removeGate = new Grammar(removeGate);
+            Grammar _removeLink = new Grammar(removeLink);
 
             recognizer.LoadGrammarAsync(_clear_grammar);
             recognizer.LoadGrammarAsync(_insert_grammar);
             recognizer.LoadGrammarAsync(_connect_grammar);
+            recognizer.LoadGrammarAsync(_command_Start);
+            recognizer.LoadGrammarAsync(_undo);
+            recognizer.LoadGrammarAsync(_redo);
+            recognizer.LoadGrammarAsync(_exit);
+            recognizer.LoadGrammarAsync(_removeGate);
+            recognizer.LoadGrammarAsync(_removeLink);
             
             //recognizer.RecognizeAsync(RecognizeMode.Multiple);
             while (true)
@@ -397,16 +460,29 @@ namespace DigitalCircuitDesign
 
         public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
-            //Console.WriteLine("Speech recognized: " + e.Result.Text);
-            MessageBox.Show(e.Result.Text);
             string command = e.Result.Text;
             string[] tokens = command.Split(' ');
-            if (tokens[0] == "Insert")
+            
+            
+            if (tokens[0] == "Command")
             {
-                if(tokens.Length != 6)
-                {  return;   }
-                
-                string gate= tokens[1];
+               textBox1.Text = "Ready for command. Listening..";
+
+               if (secondThreadForm == null || !secondThreadForm.IsHandleCreated)
+                {
+                    secondThreadForm = SecondUIThreadForm.Create();
+                    secondThreadForm.Focus(); 
+                    commandReady = true;
+                }
+               
+            }
+            
+            else if (tokens[0] == "Insert" && commandReady == true)
+            {
+                if (tokens.Length != 6)
+                { return; }
+
+                string gate = tokens[1];
                 string row = "R";
                 string column = "C";
                 int r = GetNumber(tokens[3]);
@@ -415,29 +491,270 @@ namespace DigitalCircuitDesign
                     return;
                 row = row + r;
                 column = column + c;
-                addGates(gate, row, column);
-            }
-            else if (tokens[0] == "Connect")
-                {
-                    if (tokens.Length != 8)
-                    { return; }
 
-                    int rowS = GetNumber(tokens[2]);
-                    int colS = GetNumber(tokens[3]);
-                    int rowE = GetNumber(tokens[6]);
-                    int colE = GetNumber(tokens[7]);
-                    MessageBox.Show(e.Result.Text);
-                    //connectGates(rowS, colS, rowE, colE);
+                addGates(gate, row, column);
+                textBox1.Text = e.Result.Text;                              
+                commandReady = false;
+                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfCommands;
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+
+            }
+            else if (tokens[0] == "Connect" && commandReady == true)
+            {
+                if (tokens.Length != 9)
+                { return; }
+
+                String rowS = "R" + GetNumber(tokens[2]);
+                String colS = "C" + GetNumber(tokens[4]);
+                String rowE = "R" + GetNumber(tokens[6]);
+                String colE = "C" + GetNumber(tokens[8]);
+                
+                addLinks(rowS, colS, rowE, colE);
+                commandReady = false;
+                textBox1.Text = e.Result.Text;
+                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfCommands;
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+
+            }
+            else if (tokens[0] == "Clear" && commandReady == true)
+            {
+
+                textBox1.Text = "You said Clear. Are you sure? Say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "Couldn't hear you. You said Clear. Are you sure? Say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
                 }
-            else if (tokens[0] == "Clear")
-            { }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //Clear logic                  
+
+                    textBox1.Text = "Clear";
+                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfCommands;
+                }
+
+                commandReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+                
+            }
+            else if (tokens[0] == "Undo" && commandReady == true)
+            {
+                textBox1.Text = e.Result.Text;
+                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfCommands;
+                commandReady = false;
+
+                //UNDO LOGIC
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Redo" && commandReady == true)
+            {
+                textBox1.Text = e.Result.Text;
+                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfCommands;
+                commandReady = false;
+
+                //REDO LOGIC
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Remove" && tokens[1] == "gate" && commandReady == true)
+            {                
+                textBox1.Text = "You said Remove Gate R " + tokens[3] + " C " + tokens[5] +" . Are you sure? Say yes or no!";                
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+               
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "Couldn't hear you. You said Remove Gate R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize(); 
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //remove logic                    
+                    
+                    textBox1.Text = "Remove Gate R " + tokens[3] + " C " + tokens[5];
+                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfCommands;
+                }
+
+                commandReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                
+                this.Focus();
+                
+            }
+            else if (tokens[0] == "Remove" && tokens[1] == "link" && commandReady == true)
+            {
+                textBox1.Text = "You said Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "Couldn't hear you. You said Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //remove logic                    
+
+                    textBox1.Text = "Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5];
+                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfCommands;
+                }
+                               
+                commandReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Exit" && commandReady == true)
+            {
+                textBox1.Text = e.Result.Text;
+                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfCommands;
+                commandReady = false;
+
+                //Exit logic
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else
+            {
+                commandReady = false;
+                textBox1.Text = "First say 'Command' to speak";
+                textBox2.Text = historyOfCommands;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
       
+        }
+
+        public void SpeechRecognizedForYesNo(object sender, SpeechRecognizedEventArgs e)
+        {
+            yesNoForRemoveGateOrLink = e.Result.Text;            
+        }
+
+        public void SpeechRejectedForYesNo(object sender, SpeechRecognitionRejectedEventArgs e)
+        {
+            yesNoForRemoveGateOrLink = "invalid"; 
         }
 
         public void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
         {
             //Console.WriteLine("Speech input failed");
-            MessageBox.Show("Failed");
+            commandReady = false;
+
+            if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+            textBox1.Text = "Failed to recognize what you said. Retry again starting with word Command ";            
+            this.Focus();
         }
 
         public int GetNumber(string numberString)
@@ -472,33 +789,49 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-
+            //RecognizeSpeech();
             addGates("and", "R0", "C0");
-            addGates("nor", "R5", "C8");
-            addLinks("R0", "C0", "R5", "C8");
+            addGates("nor", "R3", "C8");
+            addLinks("R0", "C0", "R3", "C8");
+
+            addGates("or", "R1", "C0");
+            addGates("not", "R6", "C8");
+            addLinks("R1", "C0", "R6", "C8");
+            
+            addGates("xor", "R2", "C3");
+            addGates("nand", "R3", "C4");
+            addLinks("R2", "C3", "R3", "C4");
+
+            addGates("xor", "R5", "C3");
+            addGates("nand", "R5", "C5");
+            addLinks("R5", "C3", "R5", "C5");
+
+            //failed test 
+            /*addGates("xor", "R5", "C9");
+            addGates("nand", "R5", "C10");
+            addLinks("R5", "C9", "R5", "C10");*/
+
+
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
-            //addGates("xor", "R0", "C3");
-            //addGates("nand", "R0", "C4");
-            
-            //addGates("xnor", "R0", "C10");
-            //addGates("xnor", "R7", "C19");
+            //addGates("xnor", "R0", "C7");
+            //addGates("xnor", "R5", "C7");
+            //addLinks("R0", "C7", "R5", "C7");
         }
         private void undo()
         {
-            
             removeFromUndoStack();
         }
         private void redo()
         {
-            
             removeFromRedoStack();
         }
+        
         public void addToUndoStack()
         {
             StackData s = new StackData(CloneDictionaryLayout(layout),
                 CloneDictionaryLinks(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
-            if (currEnd - currStart +1 >= 5)
+            if (currEnd - currStart + 1 >= 5)
             {
                 currStart++;
             }
@@ -507,7 +840,7 @@ namespace DigitalCircuitDesign
         }
         private void addToUndoStack(StackData s)
         {
-            if (currEnd - currStart +1 >= 5)
+            if (currEnd - currStart + 1 >= 5)
             {
                 currStart++;
             }
@@ -516,7 +849,7 @@ namespace DigitalCircuitDesign
         }
         public void removeFromUndoStack()
         {
-            if (currEnd >currStart)
+            if (currEnd > currStart)
             {
                 addToRedoStack();
                 StackData temp = arr[(currEnd - 1) % 5];
@@ -545,7 +878,7 @@ namespace DigitalCircuitDesign
         }
         private void addToRedoStack(StackData s)
         {
-            if (currEnd2 - currStart2+1 >= 5)
+            if (currEnd2 - currStart2 + 1 >= 5)
             {
                 currStart2++;
             }
@@ -554,7 +887,7 @@ namespace DigitalCircuitDesign
         }
         public void removeFromRedoStack()
         {
-            if (currEnd2 > currStart2 )
+            if (currEnd2 > currStart2)
             {
                 addToUndoStack();
                 StackData temp = arr2[(currEnd2 - 1) % 5];
@@ -574,7 +907,6 @@ namespace DigitalCircuitDesign
 
         private void button2_Click(object sender, EventArgs e)
         {
-            
             undo();
         }
 
@@ -582,7 +914,8 @@ namespace DigitalCircuitDesign
         {
             redo();
         }
-        private static Dictionary<string,Layout> CloneDictionaryLayout(Dictionary<string,Layout> original) 
+
+        private static Dictionary<string, Layout> CloneDictionaryLayout(Dictionary<string, Layout> original)
         {
             Dictionary<string, Layout> ret = new Dictionary<string, Layout>(original.Count,
                                                                     original.Comparer);
@@ -631,7 +964,6 @@ namespace DigitalCircuitDesign
 
         public int[] offset;
         public char[] directions;
-
         public LinkDirections()
         {
         }
@@ -664,6 +996,7 @@ namespace DigitalCircuitDesign
             }
             return s;
         }
+
     }
 
     //Add
@@ -788,9 +1121,10 @@ namespace DigitalCircuitDesign
         public Gates type;
         public ArrayList input;
         public ArrayList output;
-
-        public Layout(){
+        public Layout()
+        {
         }
+
         public Layout(int x, int y, Gates type)
         {
             this.xcord = x;
@@ -801,22 +1135,23 @@ namespace DigitalCircuitDesign
         }
         public Layout copy(Layout input)
         {
-        Layout n=new Layout();
-        n.xcord = input.xcord;
-        n.ycord = input.ycord;
-        n.type = input.type;
-        n.input = new ArrayList(input.input.Count);
-        for (int i = 0; i < input.input.Count; i++)
-        {
-            n.input.Insert(i,input.input[i]);
+            Layout n = new Layout();
+            n.xcord = input.xcord;
+            n.ycord = input.ycord;
+            n.type = input.type;
+            n.input = new ArrayList(input.input.Count);
+            for (int i = 0; i < input.input.Count; i++)
+            {
+                n.input.Insert(i, input.input[i]);
+            }
+            n.output = new ArrayList(input.output.Count);
+            for (int i = 0; i < input.output.Count; i++)
+            {
+                n.output.Insert(i, input.output[i]);
+            }
+            return n;
         }
-        n.output = new ArrayList(input.output.Count);
-        for (int i = 0; i < input.output.Count; i++)
-        {
-            n.output.Insert(i, input.output[i]);
-        }
-        return n;
-        }
+
     }
 
     enum Gates{AND,OR,EXOR,NOT,NAND,NOR};
