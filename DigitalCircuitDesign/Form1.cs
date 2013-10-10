@@ -18,8 +18,8 @@ namespace DigitalCircuitDesign
     {
 
         SecondUIThreadForm secondThreadForm;
-        bool commandReady = false;
-        string historyOfCommands = "Command History: \r\n";
+        bool droidReady = false;
+        string historyOfdroids = "Command History: \r\n";
         string yesNoForRemoveGateOrLink;
         
 
@@ -31,9 +31,9 @@ namespace DigitalCircuitDesign
         int error = 10;
         //also modified in constructor
         int picHeightError = 10;
-        int outPinWidth = 15;
+        int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "E:/Workspace/VisualStudio/SpeechRecognition-Pratik/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "E:/Workspace/VisualStudio/SpeechRecognition-master/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
@@ -61,7 +61,7 @@ namespace DigitalCircuitDesign
             InitializeComponent();
             clearScreen();
             clObject = new ConnectLink(nHeight, nWidth,2);
-            textBox2.Text = historyOfCommands;
+            textBox2.Text = historyOfdroids;
         }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -148,6 +148,12 @@ namespace DigitalCircuitDesign
                     case Gates.EXOR:
                         addImage(x, y, lay.xcord, lay.ycord, "xor.jpg");
                         break;
+                    case Gates.SOURCE:
+                        addImage(x, y, lay.xcord, lay.ycord, "source.jpg");
+                        break;
+                    case Gates.OUTPUT:
+                        addImage(x, y, lay.xcord, lay.ycord, "destination.jpg");
+                        break;
                     /*case "XN":
                         addImage(x, y, imageFolder + "xnor.jpg");
                         break;*/
@@ -199,7 +205,8 @@ namespace DigitalCircuitDesign
                     case "nor": type = Gates.NOR; break;
                     case "not": type = Gates.NOT; break;
                     case "xor": type = Gates.EXOR; break;
-                   
+                    case "source": type = Gates.SOURCE; break;
+                    case "output": type = Gates.OUTPUT; break;
                     //case "xnor": array[x, y] = "XN"; break;
                 }
                 addToUndoStack();
@@ -216,12 +223,13 @@ namespace DigitalCircuitDesign
             int yStart = Convert.ToInt32(colStart.Substring(1));
             int xEnd = Convert.ToInt32(rowEnd.Substring(1));
             int yEnd = Convert.ToInt32(colEnd.Substring(1));
+
             LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
             links.Add(linkCnt,ld);
-            linkCnt++;
+            
             layout[rowStart + colStart].output.Add(linkCnt);
             layout[rowEnd + colEnd].input.Add(linkCnt);
-
+            linkCnt++;
             this.Invalidate();
         }
 
@@ -274,9 +282,11 @@ namespace DigitalCircuitDesign
             //calculate remaining points
             for (i=0; i < path.Length; i++)
             {
-                int nextOffset = (i != path.Length - 1 &&
-                    (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
-                    ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
+                //int nextOffset = (i != path.Length - 1 &&
+                   // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
+                   // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
+
+                int nextOffset = (i != path.Length - 1)?(offset[i+1]==0)?0:offset[i+1]+5:0;
                 //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {
@@ -307,8 +317,8 @@ namespace DigitalCircuitDesign
                 points[i + 3] = new Point(currx, curry);
               }
             //connect last point with the gate
-            
-            if (curry==((height*rowE)+start))
+
+            if (curry <= ((height * rowE) + start + (height / 2)))
             {
                 //comp is down
                 points[i + 3] = new Point(currx, curry + (height/4));
@@ -318,7 +328,6 @@ namespace DigitalCircuitDesign
             else
             {
                 //comp is up
-                textBox1.Text += "HHH";
                 points[i + 3] = new Point(currx, curry - (height/4));
                 i++;
                 points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2)-5));
@@ -443,13 +452,13 @@ namespace DigitalCircuitDesign
             
 
 
-            GrammarBuilder commandStart = new GrammarBuilder("Command");
+            GrammarBuilder droidStart = new GrammarBuilder("droid");
             
             
             Grammar _clear_grammar = new Grammar(clear);
             Grammar _insert_grammar = new Grammar(insert);
             Grammar _connect_grammar = new Grammar(connect);
-            Grammar _command_Start = new Grammar(commandStart);
+            Grammar _droid_Start = new Grammar(droidStart);
             Grammar _undo = new Grammar(undo);
             Grammar _redo = new Grammar(redo);
             Grammar _exit = new Grammar(exit);
@@ -459,7 +468,7 @@ namespace DigitalCircuitDesign
             recognizer.LoadGrammarAsync(_clear_grammar);
             recognizer.LoadGrammarAsync(_insert_grammar);
             recognizer.LoadGrammarAsync(_connect_grammar);
-            recognizer.LoadGrammarAsync(_command_Start);
+            recognizer.LoadGrammarAsync(_droid_Start);
             recognizer.LoadGrammarAsync(_undo);
             recognizer.LoadGrammarAsync(_redo);
             recognizer.LoadGrammarAsync(_exit);
@@ -482,24 +491,24 @@ namespace DigitalCircuitDesign
 
         public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
-            string command = e.Result.Text;
-            string[] tokens = command.Split(' ');
+            string droid = e.Result.Text;
+            string[] tokens = droid.Split(' ');
+            textBox1.ForeColor = Color.Black;
             
-            
-            if (tokens[0] == "Command")
+            if (tokens[0] == "droid")
             {
-               textBox1.Text = "Ready for command. Listening..";
+               textBox1.Text = "Ready!!!. Listening..";
 
                if (secondThreadForm == null || !secondThreadForm.IsHandleCreated)
                 {
                     secondThreadForm = SecondUIThreadForm.Create();
                     secondThreadForm.Focus(); 
-                    commandReady = true;
+                    droidReady = true;
                 }
                
             }
             
-            else if (tokens[0] == "Insert" && commandReady == true)
+            else if (tokens[0] == "Insert" && droidReady == true)
             {
                 if (tokens.Length != 6)
                 { return; }
@@ -511,14 +520,57 @@ namespace DigitalCircuitDesign
                 int c = GetNumber(tokens[5]);
                 if (r == -1 || c == -1)
                     return;
+                if (r > 6)
+                {
+                    textBox1.Text = "Illegal location R" + r + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (c > 16)
+                {
+                    textBox1.Text = "Illegal location C"+c+", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (layout.ContainsKey(row + r + column + c))
+                {
+                    textBox1.Text = "A gate already exits in the slot R"+r+" C"+c;
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+                
                 row = row + r;
                 column = column + c;
 
                 addGates(gate, row, column);
-                textBox1.Text = e.Result.Text;                              
-                commandReady = false;
-                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                textBox2.Text = historyOfCommands;
+                textBox1.Text = "Insert " + gate.ToUpper() + " R" + r + " C" + c;                              
+                droidReady = false;
+                historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper()+ " R" + r + " C" + c + "\r\n";
+                textBox2.Text = historyOfdroids;
 
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
@@ -526,7 +578,7 @@ namespace DigitalCircuitDesign
                 this.Focus();
 
             }
-            else if (tokens[0] == "Connect" && commandReady == true)
+            else if (tokens[0] == "Connect" && droidReady == true)
             {
                 if (tokens.Length != 9)
                 { return; }
@@ -535,12 +587,106 @@ namespace DigitalCircuitDesign
                 String colS = "C" + GetNumber(tokens[4]);
                 String rowE = "R" + GetNumber(tokens[6]);
                 String colE = "C" + GetNumber(tokens[8]);
-                
+                if (GetNumber(tokens[2]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (GetNumber(tokens[4]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+                if (GetNumber(tokens[6]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[6]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    
+                }
+                if (GetNumber(tokens[8]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[8]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    
+                }
+
+                if (!layout.ContainsKey("R"+GetNumber(tokens[2])+"C"+GetNumber(tokens[4])))
+                {
+                    textBox1.Text = "Please add gate in slot R"+GetNumber(tokens[2])+" C"+GetNumber(tokens[4])+" before connecting";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+                if (!layout.ContainsKey("R" + GetNumber(tokens[6]) + "C" + GetNumber(tokens[8])))
+                {
+                    textBox1.Text = textBox1.Text = "Please add gate in slot R" + GetNumber(tokens[6]) + " C" + GetNumber(tokens[8]) + " before connecting";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+
+                foreach (int index in links.Keys)
+                {
+                    LinkDirections temp = links[index];
+                    if (temp.x == GetNumber(tokens[2]) && temp.y == GetNumber(tokens[4])+1 && temp.destX == GetNumber(tokens[6]) && temp.destY == GetNumber(tokens[8]))
+                    {
+                        textBox1.Text = "Link R" + GetNumber(tokens[2]) + " C" + GetNumber(tokens[4]) + "R" + GetNumber(tokens[6]) + " C" + GetNumber(tokens[8]) + " already Exists, Choose another one!";
+                        textBox1.Enabled = true;
+                        textBox1.BackColor = Color.White;
+                        textBox1.ForeColor = Color.Red;
+                        this.Focus();
+                        if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    }
+
+                }
+                droidReady = false;
+                textBox1.Text = "Connect " + rowS + " " + colS + " " + rowE + " " + colE;
+                historyOfdroids = historyOfdroids + "Connect " + rowS + " " + colS + " " + rowE + " " + colE + "\r\n";
+                textBox2.Text = historyOfdroids;
                 addLinks(rowS, colS, rowE, colE);
-                commandReady = false;
-                textBox1.Text = e.Result.Text;
-                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                textBox2.Text = historyOfCommands;
 
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
@@ -548,10 +694,10 @@ namespace DigitalCircuitDesign
                 this.Focus();
 
             }
-            else if (tokens[0] == "Clear" && commandReady == true)
+            else if (tokens[0] == "Clear" && droidReady == true)
             {
 
-                textBox1.Text = "You said Clear. Are you sure? Say yes or no!";
+                textBox1.Text = "Are you sure you want to clear the screen? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -575,7 +721,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "Couldn't hear you. You said Clear. Are you sure? Say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to clear the screen? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -589,48 +735,100 @@ namespace DigitalCircuitDesign
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
                     //Clear logic                  
-
+                    clear();
                     textBox1.Text = "Clear";
-                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                    textBox2.Text = historyOfCommands;
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
                 }
 
-                commandReady = false;
+                droidReady = false;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
                 this.Focus();
                 
             }
-            else if (tokens[0] == "Undo" && commandReady == true)
+            else if (tokens[0] == "Undo" && droidReady == true)
             {
                 textBox1.Text = e.Result.Text;
-                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                textBox2.Text = historyOfCommands;
-                commandReady = false;
+                historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfdroids;
+                droidReady = false;
 
                 //UNDO LOGIC
-
+                if (currStart == currEnd)
+                {
+                    textBox1.Text = "No previous state exits.";
+                }
+                else
+                    undo();
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
             }
-            else if (tokens[0] == "Redo" && commandReady == true)
+            else if (tokens[0] == "Redo" && droidReady == true)
             {
+
                 textBox1.Text = e.Result.Text;
-                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                textBox2.Text = historyOfCommands;
-                commandReady = false;
+                historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfdroids;
+                droidReady = false;
 
                 //REDO LOGIC
+                if (currStart2 == currEnd2)
+                {
+                    textBox1.Text = "No future state exits.";
+                }
+                else
+                    redo();
 
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
             }
-            else if (tokens[0] == "Remove" && tokens[1] == "gate" && commandReady == true)
-            {                
-                textBox1.Text = "You said Remove Gate R " + tokens[3] + " C " + tokens[5] +" . Are you sure? Say yes or no!";                
+            else if (tokens[0] == "Remove" && tokens[1] == "gate" && droidReady == true)
+            {
+                if (GetNumber(tokens[3]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (GetNumber(tokens[5]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+              
+
+                if (!layout.ContainsKey("R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5])))
+                {
+                    textBox1.Text = "No gate to remove in slot R" + GetNumber(tokens[3]) + " C" + GetNumber(tokens[5]);
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+                
+                textBox1.Text = "Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";                
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -654,7 +852,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "Couldn't hear you. You said Remove Gate R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -668,22 +866,96 @@ namespace DigitalCircuitDesign
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
                     //remove logic                    
-                    
-                    textBox1.Text = "Remove Gate R " + tokens[3] + " C " + tokens[5];
-                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                    textBox2.Text = historyOfCommands;
+                    removeGates("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]));
+                    textBox1.Text = "Remove Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
                 }
 
-                commandReady = false;
+                droidReady = false;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 
                 this.Focus();
                 
             }
-            else if (tokens[0] == "Remove" && tokens[1] == "link" && commandReady == true)
+            else if (tokens[0] == "Remove" && tokens[1] == "link" && droidReady == true)
             {
-                textBox1.Text = "You said Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                if (GetNumber(tokens[3]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (GetNumber(tokens[5]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+                if (GetNumber(tokens[7]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[6]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+
+                }
+                if (GetNumber(tokens[9]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[8]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+
+                }
+
+                bool src = false;
+                foreach (int index in links.Keys)
+                {
+                    LinkDirections temp = links[index];
+                    if (temp.x == GetNumber(tokens[3]) && temp.y == GetNumber(tokens[5])+1 && temp.destX == GetNumber(tokens[7]) && temp.destY == GetNumber(tokens[9]))
+                    {
+                        src = true;
+                        break;
+                    }
+
+                }
+
+                if (src == false)
+                {
+                    textBox1.Text = "Link R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5]) + " R" + GetNumber(tokens[7]) + "C" + GetNumber(tokens[9]) + " does not Exists!";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+
+                
+                textBox1.Text = "Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -707,7 +979,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "Couldn't hear you. You said Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5] + " . Are you sure? Say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -721,23 +993,59 @@ namespace DigitalCircuitDesign
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
                     //remove logic                    
-
-                    textBox1.Text = "Remove Link R " + tokens[3] + " C " + tokens[5] + " R " + tokens[3] + " C " + tokens[5];
-                    historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                    textBox2.Text = historyOfCommands;
+                    removeLinks("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]) , "R" + GetNumber(tokens[7]) , "C" + GetNumber(tokens[9]));
+                    textBox1.Text = "Remove Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
                 }
                                
-                commandReady = false;
+                droidReady = false;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
             }
-            else if (tokens[0] == "Exit" && commandReady == true)
+            else if (tokens[0] == "Exit" && droidReady == true)
             {
-                textBox1.Text = e.Result.Text;
-                historyOfCommands = historyOfCommands + e.Result.Text + "\r\n";
-                textBox2.Text = historyOfCommands;
-                commandReady = false;
+                textBox1.Text = "Are you sure you want to Exit? Please say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "I could not hear you. Are you sure you want to Exit? Please say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    Environment.Exit(0);    
+                }
+                
 
                 //Exit logic
 
@@ -747,9 +1055,9 @@ namespace DigitalCircuitDesign
             }
             else
             {
-                commandReady = false;
-                textBox1.Text = "First say 'Command' to speak";
-                textBox2.Text = historyOfCommands;
+                droidReady = false;
+                textBox1.Text = "Please say 'droid' before the expression.";
+                textBox2.Text = historyOfdroids;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
@@ -770,12 +1078,12 @@ namespace DigitalCircuitDesign
         public void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
         {
             //Console.WriteLine("Speech input failed");
-            commandReady = false;
+            droidReady = false;
 
             if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                 secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
-            textBox1.Text = "Failed to recognize what you said. Retry again starting with word Command ";            
+            textBox1.Text = "Failed to recognize input. Please try again, start with the word droid ";            
             this.Focus();
         }
 
@@ -811,7 +1119,6 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //RecognizeSpeech();
             addGates("and", "R0", "C0");
             addGates("nor", "R3", "C8");
             addLinks("R0", "C0", "R3", "C8");
@@ -819,8 +1126,36 @@ namespace DigitalCircuitDesign
             addGates("or", "R1", "C0");
             addGates("not", "R6", "C8");
             addLinks("R1", "C0", "R6", "C8");
-            
+
             addGates("xor", "R2", "C3");
+            addGates("nand", "R3", "C4");
+            addLinks("R2", "C3", "R3", "C4");
+
+            addGates("xor", "R5", "C3");
+            addGates("nand", "R5", "C5");
+            addLinks("R5", "C3", "R5", "C5");
+
+            addGates("and", "R5", "C0");
+            addGates("nor", "R4", "C1");
+            addLinks("R5", "C0", "R4", "C1");
+
+            addGates("source","R0","C10");
+            addLinks("R4", "C1", "R0", "C10");
+
+            /*addGates("and", "R0", "C0");
+            addGates("nand", "R1", "C1");
+            addLinks("R0", "C0", "R1", "C1");*/
+            /*clear();
+            addGates("and", "R0", "C0");*/
+            //RecognizeSpeech();
+            
+
+            /*addGates("or", "R1", "C0");
+            addGates("not", "R6", "C8");
+            addLinks("R1", "C0", "R6", "C8");*/
+            //removeGates("R0", "C0");
+            //removeLinks("R0", "C0", "R3", "C8");
+            /*addGates("xor", "R2", "C3");
             addGates("nand", "R3", "C4");
             addLinks("R2", "C3", "R3", "C4");
 
@@ -836,7 +1171,7 @@ namespace DigitalCircuitDesign
             /*addGates("xor", "R5", "C9");
             addGates("nand", "R5", "C10");
             addLinks("R5", "C9", "R5", "C10");*/
-
+            
 
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
@@ -844,6 +1179,77 @@ namespace DigitalCircuitDesign
             //addGates("xnor", "R5", "C7");
             //addLinks("R0", "C7", "R5", "C7");
         }
+
+        public void clear()
+        {
+            addToUndoStack();
+            layout = new Dictionary<String, Layout>();
+            links = new Dictionary<int, LinkDirections>();
+            clObject = new ConnectLink(clObject.m, clObject.n, clObject.maxLinks);
+            linkCnt = 0;
+        }
+
+        public void removeGates(String row, String col)
+        {
+            //row and col should be of the format R0 and C1 
+            int x = Convert.ToInt32(row.Substring(1));
+            int y = Convert.ToInt32(col.Substring(1));
+            addToUndoStack();
+
+            for (int index = 0; index < layout[row + col].output.Count; index++)
+            {
+                removeLink((int)layout[row + col].output[index]);
+            }
+
+            for (int index = 0; index < layout[row + col].input.Count; index++)
+            {
+                removeLink((int)layout[row + col].input[index]);
+            }
+            layout.Remove(row + col);
+            this.Invalidate();
+        }
+        //add
+        /* public void DrawLinks(int startx,int starty,int endx,int endy){    
+             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
+             connectGates(startx,starty, ld.directions, ld.offset);
+         }*/
+
+        public void removeLink(int index)
+        {
+            String source = "R" + links[index].x + "C" + (links[index].y - 1);
+            String dest = "R" + links[index].destX + "C" + links[index].destY;
+
+            layout[source].output.Remove(index);
+            layout[dest].input.Remove(index);
+
+            links.Remove(index);
+        }
+
+        public void removeLinks(String row, String col, String rowDest, String colDest)
+        {
+            //row and col should be of the format R0 and C1 
+            int x = Convert.ToInt32(row.Substring(1));
+            int y = Convert.ToInt32(col.Substring(1)) + 1;
+            int xDest = Convert.ToInt32(rowDest.Substring(1));
+            int yDest = Convert.ToInt32(colDest.Substring(1));
+            addToUndoStack();
+            int sol = -1;
+            foreach (int index in links.Keys)
+            {
+                LinkDirections temp = links[index];
+                if (temp.x == x && temp.y == y && temp.destX == xDest && temp.destY == yDest)
+                {
+                    sol = index;
+                    break;
+                }
+
+            }
+            removeLink(sol);
+
+            this.Invalidate();
+            this.Focus();
+        }
+
         private void undo()
         {
             removeFromUndoStack();
@@ -1180,5 +1586,5 @@ namespace DigitalCircuitDesign
 
     }
 
-    enum Gates{AND,OR,EXOR,NOT,NAND,NOR};
+    enum Gates { AND, OR, EXOR, NOT, NAND, NOR, SOURCE, OUTPUT };
 }
