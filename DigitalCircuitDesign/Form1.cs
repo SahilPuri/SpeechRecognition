@@ -7,21 +7,33 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using System.Speech.Recognition;
+using System.Windows.Forms.VisualStyles;
 
 namespace DigitalCircuitDesign
-{
-    
+{  
     public partial class Form1 : Form
     {
-        int nWidth = 20;
-        int nHeight = 8;
+
+        SecondUIThreadForm secondThreadForm;
+        bool droidReady = false;
+        string historyOfdroids = "Command History: \r\n";
+        string yesNoForRemoveGateOrLink;
+        
+
+        int nWidth = 17;
+        int nHeight = 7;
         int start = 50;
-        int width = 60;
-        int height = 60;
+        int width = 70;
+        int height = 70;
         int error = 10;
-        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
+        //also modified in constructor
+        int picHeightError = 10;
+        int outPinWidth = 11;
+        int inPinWidth = 15;
+        static String imageFolder = "C:/Users/Sail/Desktop/SpeechRecognition-master/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
@@ -38,15 +50,18 @@ namespace DigitalCircuitDesign
         StackData[] arr2 = new StackData[5];
         int currStart2 = 0;
         int currEnd2 = 0;
-        
-        PictureBox[,] pic=new PictureBox[100,100];
-        
+
+        PictureBox[,] pic = new PictureBox[100, 100];
 
         public Form1()
         {
+            picHeightError += (height-55)/2;
+            outPinWidth+=(width-70)/2;
+            inPinWidth += (width-70)/2;
             InitializeComponent();
             clearScreen();
             clObject = new ConnectLink(nHeight, nWidth,2);
+            textBox2.Text = historyOfdroids;
         }
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -59,6 +74,7 @@ namespace DigitalCircuitDesign
         }
         public void DrawGrid()
         {
+            this.BackColor = Color.White;
             System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Black);
             System.Drawing.Graphics formGraphics = this.CreateGraphics();
 
@@ -103,18 +119,19 @@ namespace DigitalCircuitDesign
         }
         public void DrawComponents()
         {
-            foreach(LinkDirections ld in links.Values){
-                connectGates(ld.x, ld.y, ld.directions, ld.offset);
+            foreach (LinkDirections ld in links.Values)
+            {
+                connectGates(ld.x, ld.y, ld.destX,ld.destY, ld.directions, ld.offset);
             }
             foreach (Layout lay in layout.Values)
             {
-                int x = start + lay.ycord * height + 1;
-                int y = start + lay.xcord * width + error;
+                int y = start + lay.xcord * height;
+                int x = start + lay.ycord * width;
 
                 switch (lay.type)
                 {
                     case Gates.AND:
-                        addImage(x, y,lay.xcord,lay.ycord, "and.jpg");
+                        addImage(x, y, lay.xcord, lay.ycord, "and.jpg");
                         break;
                     case Gates.OR:
                         addImage(x, y, lay.xcord, lay.ycord, "or.jpg");
@@ -141,29 +158,29 @@ namespace DigitalCircuitDesign
         {
             for (int i = 0; i < 100; i++)
             {
-                for (int j = 0; j < 100;j++ )
+                for (int j = 0; j < 100; j++)
                 {
-                    if(pic[i,j]!=null)
-                    pic[i,j].Image = null;
+                    if (pic[i, j] != null)
+                        pic[i, j].Image = null;
                 }
             }
-            
-        }
 
-        public void addImage(int x, int y, int xcord,int ycord,String image)
-        {
-                String imageLocation = imageFolder + image;
-                PictureBox box=pic[xcord, ycord];
-                if (box == null)
-                {
-                    box = new PictureBox();
-                    box.Location = new Point(x, y);
-                    box.Size = new Size(width - 1, height - error);
-                    box.Parent = this;
-                    pic[xcord, ycord] = box;
-                }
-                box.Image = Image.FromFile(imageLocation);
         }
+        public void addImage(int x, int y, int xcord, int ycord, String image)
+        {
+            String imageLocation = imageFolder + image;
+            PictureBox box = pic[xcord, ycord];
+            if (box == null)
+            {
+                box = new PictureBox();
+                box.Location = new Point(x+inPinWidth, y+picHeightError);
+                box.Size = new Size(width-inPinWidth-outPinWidth, height - (picHeightError*2));
+                box.Parent = this;  
+                pic[xcord, ycord] = box;
+            }
+            box.Image = Image.FromFile(imageLocation);
+        }
+        
 
         //replace
         public void addGates(String gate, String row, String col)
@@ -182,6 +199,7 @@ namespace DigitalCircuitDesign
                     case "nor": type = Gates.NOR; break;
                     case "not": type = Gates.NOT; break;
                     case "xor": type = Gates.EXOR; break;
+              
                     //case "xnor": array[x, y] = "XN"; break;
                 }
                 addToUndoStack();
@@ -198,10 +216,14 @@ namespace DigitalCircuitDesign
             int yStart = Convert.ToInt32(colStart.Substring(1));
             int xEnd = Convert.ToInt32(rowEnd.Substring(1));
             int yEnd = Convert.ToInt32(colEnd.Substring(1));
+
             LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
             links.Add(linkCnt,ld);
+            
             layout[rowStart + colStart].output.Add(linkCnt);
             layout[rowEnd + colEnd].input.Add(linkCnt);
+            linkCnt++;
+            this.Invalidate();
         }
 
           
@@ -210,14 +232,14 @@ namespace DigitalCircuitDesign
             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
             connectGates(startx,starty, ld.directions, ld.offset);
         }*/
-        public void connectGates(int rowS, int colS, char[] path, int[] offset)
+        public void connectGates(int rowS, int colS, int rowE,int colE, char[] path, int[] offset)
         {
             //lasth and v offset keep track of recent offset difference
-            int lasthoffset=0, lastvoffset=0;
+            int lasthoffset = 0, lastvoffset = 0;
             int curry = rowS * height + start, currx = colS * width + start;
             //Method implement to add connection between gates
             //additional 3 for start,2 for end, + path length ; //4 for start, and 3 arrow points
-            Point[] points =new Point[path.Length+5];
+            Point[] points = new Point[path.Length + 5];
             if (path.Length > 1)
             {
                 if (path[0] == 'L' || path[0] == 'R')
@@ -238,47 +260,70 @@ namespace DigitalCircuitDesign
                 //comp is down
                 temp = new Point(currx, curry + offset[0] + (height / 2));
             }
-            else
+            /*else
             {
                 //comp is above
-                    temp = new Point(currx, curry-offset[0]-(height/2));
-            }
-            points[0] = new Point(currx-(width/2),temp.Y);
-            points[1] = temp;
+                temp = new Point(currx, curry - offset[0] - (height / 2));
+            }*/
+            int i = 0;
+            points[i++] = new Point(currx - (width / 2), temp.Y);
+            points[i++] = temp;
             //rest of the points
-            points[2] = new Point(currx, curry);
+            points[i++] = new Point(currx, curry);
 
-            int i;
+            
             //calculate remaining points
-            for (i = 0; i < path.Length; i++)
+            for (i=0; i < path.Length; i++)
             {
-                int nextOffset=(i!=path.Length-1 && 
-                    (((path[i]=='L' || path[i]=='R') && (path[i+1]=='U' || path[i+1]=='D')) || 
-                    ((path[i]=='U' || path[i]=='D') && (path[i+1]=='L' || path[i+1]=='R'))))?offset[i+1]:0;
+                //int nextOffset = (i != path.Length - 1 &&
+                   // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
+                   // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
+
+                int nextOffset = (i != path.Length - 1)?(offset[i+1]==0)?0:offset[i+1]+5:0;
                 //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {
-                    case 'L': currx =currx-lasthoffset-width + nextOffset; lasthoffset=nextOffset; break;
-                    case 'R': currx = currx-lasthoffset+width + nextOffset; lasthoffset = nextOffset; break;
-                    case 'U': curry = curry-lastvoffset-height +nextOffset; lastvoffset = nextOffset; break;
-                    case 'D': curry = curry-lastvoffset+height +nextOffset; lastvoffset = nextOffset; break;
+                    case 'L': currx = currx - lasthoffset - width + nextOffset; lasthoffset = nextOffset; break;
+                    case 'R': currx = currx - lasthoffset + width + nextOffset; lasthoffset = nextOffset; break;
+                    case 'U': curry = curry - lastvoffset - height + nextOffset; lastvoffset = nextOffset; break;
+                    case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
                 }
-                points[i + 3] = new Point(currx,curry);
-            }
+                //make the second point void if component is upwards and first point is downwards
+                if (i == 0 && i!=path.Length-1 && currx == points[i + 2].X)
+                {
+                        points[i + 2] = new Point(currx, curry);
+                }
+                else if (i == (path.Length - 1) && currx==points[i+2].X)
+                {
+                    if (points[i + 2].Y < curry)
+                    {
+                        //component is down
+                        points[i + 2] = new Point(currx, curry);
+                    }
+                    else
+                    {
+                        //component is up
+                        currx = points[i + 2].X;
+                        curry = points[i + 2].Y;
+                    }
+                }
+                points[i + 3] = new Point(currx, curry);
+              }
             //connect last point with the gate
-            if (true)
+            
+            if (curry==((height*rowE)+start))
             {
                 //comp is down
-                points[i + 3] = new Point(currx, curry + 10);
+                points[i + 3] = new Point(currx, curry + (height/4));
                 i++;
-                points[i + 3] = new Point(currx + (width / 2), curry + (height / 2));
+                points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2)-5));
             }
             else
             {
                 //comp is up
-                points[i + 3] = new Point(currx, curry - 10);
+                points[i + 3] = new Point(currx, curry - (height/4));
                 i++;
-                points[i + 3] = new Point(currx + (width / 2), curry - (height / 2));
+                points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2)-5));
             }
             
             //textBox1.Text += points[i + 3].X;
@@ -314,6 +359,7 @@ namespace DigitalCircuitDesign
             myPen.Width = 3;
             this.CreateGraphics().DrawLines(myPen, points);
         }
+
         
         public void DrawLShapeLine(System.Drawing.Graphics g, int intMarginLeft, int intMarginTop, int intWidth, int intHeight)
         {
@@ -349,9 +395,12 @@ namespace DigitalCircuitDesign
             recognizer.SetInputToDefaultAudioDevice();
 
             GrammarBuilder clear = new GrammarBuilder("Clear");
- 
+            GrammarBuilder undo = new GrammarBuilder("Undo");
+            GrammarBuilder redo = new GrammarBuilder("Redo");
+            GrammarBuilder exit = new GrammarBuilder("Exit");
+            
             GrammarBuilder insert = new GrammarBuilder("Insert");
-            Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand" });
+            Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand", "source", "output" });
             Choices columns = new Choices(new string[] { "zero","one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
             Choices rows = new Choices(new string[] { "zero" ,"one", "two", "three", "four", "five", "six", "seven", "eight", "nine" });
             //Choices orientation = new Choices(new string[] { "left", "right", "up", "down" });
@@ -360,26 +409,64 @@ namespace DigitalCircuitDesign
             insert.Append(rows);
             insert.Append("C");
             insert.Append(columns);
-            
             //insert.Append("towards");
             //insert.Append(orientation);
 
             GrammarBuilder connect = new GrammarBuilder("Connect");
-            connect.Append("output");
-            connect.Append(columns);
+            //connect.Append("output");
+            connect.Append("R");
             connect.Append(rows);
-            connect.Append("to");
-            connect.Append("input");
+            connect.Append("C");
             connect.Append(columns);
+            //connect.Append("to");
+            //connect.Append("input");
+            connect.Append("R");
             connect.Append(rows);
+            connect.Append("C");
+            connect.Append(columns);
+
+            GrammarBuilder removeGate = new GrammarBuilder("Remove");
+            removeGate.Append("gate");
+            removeGate.Append("R");
+            removeGate.Append(rows);
+            removeGate.Append("C");
+            removeGate.Append(columns);
+            
+            GrammarBuilder removeLink = new GrammarBuilder("Remove");
+            removeLink.Append("link");
+            removeLink.Append("R");
+            removeLink.Append(rows);
+            removeLink.Append("C");
+            removeLink.Append(columns);
+            removeLink.Append("R");
+            removeLink.Append(rows);
+            removeLink.Append("C");
+            removeLink.Append(columns);
+            
+
+
+            GrammarBuilder droidStart = new GrammarBuilder("droid");
+            
             
             Grammar _clear_grammar = new Grammar(clear);
             Grammar _insert_grammar = new Grammar(insert);
             Grammar _connect_grammar = new Grammar(connect);
+            Grammar _droid_Start = new Grammar(droidStart);
+            Grammar _undo = new Grammar(undo);
+            Grammar _redo = new Grammar(redo);
+            Grammar _exit = new Grammar(exit);
+            Grammar _removeGate = new Grammar(removeGate);
+            Grammar _removeLink = new Grammar(removeLink);
 
             recognizer.LoadGrammarAsync(_clear_grammar);
             recognizer.LoadGrammarAsync(_insert_grammar);
             recognizer.LoadGrammarAsync(_connect_grammar);
+            recognizer.LoadGrammarAsync(_droid_Start);
+            recognizer.LoadGrammarAsync(_undo);
+            recognizer.LoadGrammarAsync(_redo);
+            recognizer.LoadGrammarAsync(_exit);
+            recognizer.LoadGrammarAsync(_removeGate);
+            recognizer.LoadGrammarAsync(_removeLink);
             
             //recognizer.RecognizeAsync(RecognizeMode.Multiple);
             while (true)
@@ -397,47 +484,600 @@ namespace DigitalCircuitDesign
 
         public void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
-            //Console.WriteLine("Speech recognized: " + e.Result.Text);
-            MessageBox.Show(e.Result.Text);
-            string command = e.Result.Text;
-            string[] tokens = command.Split(' ');
-            if (tokens[0] == "Insert")
+            string droid = e.Result.Text;
+            string[] tokens = droid.Split(' ');
+            textBox1.ForeColor = Color.Black;
+            
+            if (tokens[0] == "droid")
             {
-                if(tokens.Length != 6)
-                {  return;   }
-                
-                string gate= tokens[1];
+               textBox1.Text = "Ready!!!. Listening..";
+
+               if (secondThreadForm == null || !secondThreadForm.IsHandleCreated)
+                {
+                    secondThreadForm = SecondUIThreadForm.Create();
+                    secondThreadForm.Focus(); 
+                    droidReady = true;
+                }
+               
+            }
+            
+            else if (tokens[0] == "Insert" && droidReady == true)
+            {
+                if (tokens.Length != 6)
+                { return; }
+
+                string gate = tokens[1];
                 string row = "R";
                 string column = "C";
                 int r = GetNumber(tokens[3]);
                 int c = GetNumber(tokens[5]);
                 if (r == -1 || c == -1)
                     return;
+                if (r > 6)
+                {
+                    textBox1.Text = "Illegal location R" + r + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (c > 16)
+                {
+                    textBox1.Text = "Illegal location C"+c+", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (layout.ContainsKey(row + r + column + c))
+                {
+                    textBox1.Text = "A gate already exits in the slot R"+r+" C"+c;
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+                
                 row = row + r;
                 column = column + c;
-                addGates(gate, row, column);
-            }
-            else if (tokens[0] == "Connect")
-                {
-                    if (tokens.Length != 8)
-                    { return; }
 
-                    int rowS = GetNumber(tokens[2]);
-                    int colS = GetNumber(tokens[3]);
-                    int rowE = GetNumber(tokens[6]);
-                    int colE = GetNumber(tokens[7]);
-                    MessageBox.Show(e.Result.Text);
-                    //connectGates(rowS, colS, rowE, colE);
+                addGates(gate, row, column);
+                textBox1.Text = "Insert " + gate.ToUpper() + " R" + r + " C" + c;                              
+                droidReady = false;
+                historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper()+ " R" + r + " C" + c + "\r\n";
+                textBox2.Text = historyOfdroids;
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+
+            }
+            else if (tokens[0] == "Connect" && droidReady == true)
+            {
+                if (tokens.Length != 9)
+                { return; }
+
+                String rowS = "R" + GetNumber(tokens[2]);
+                String colS = "C" + GetNumber(tokens[4]);
+                String rowE = "R" + GetNumber(tokens[6]);
+                String colE = "C" + GetNumber(tokens[8]);
+                if (GetNumber(tokens[2]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
                 }
-            else if (tokens[0] == "Clear")
-            { }
+
+                if (GetNumber(tokens[4]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+                if (GetNumber(tokens[6]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[6]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    
+                }
+                if (GetNumber(tokens[8]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[8]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    
+                }
+
+                if (!layout.ContainsKey("R"+GetNumber(tokens[2])+"C"+GetNumber(tokens[4])))
+                {
+                    textBox1.Text = "Please add gate in slot R"+GetNumber(tokens[2])+" C"+GetNumber(tokens[4])+" before connecting";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+                if (!layout.ContainsKey("R" + GetNumber(tokens[6]) + "C" + GetNumber(tokens[8])))
+                {
+                    textBox1.Text = textBox1.Text = "Please add gate in slot R" + GetNumber(tokens[6]) + " C" + GetNumber(tokens[8]) + " before connecting";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+
+
+                foreach (int index in links.Keys)
+                {
+                    LinkDirections temp = links[index];
+                    if (temp.x == GetNumber(tokens[2]) && temp.y == GetNumber(tokens[4])+1 && temp.destX == GetNumber(tokens[6]) && temp.destY == GetNumber(tokens[8]))
+                    {
+                        textBox1.Text = "Link R" + GetNumber(tokens[2]) + " C" + GetNumber(tokens[4]) + "R" + GetNumber(tokens[6]) + " C" + GetNumber(tokens[8]) + " already Exists, Choose another one!";
+                        textBox1.Enabled = true;
+                        textBox1.BackColor = Color.White;
+                        textBox1.ForeColor = Color.Red;
+                        this.Focus();
+                        if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                    }
+
+                }
+                droidReady = false;
+                textBox1.Text = "Connect " + rowS + " " + colS + " " + rowE + " " + colE;
+                historyOfdroids = historyOfdroids + "Connect " + rowS + " " + colS + " " + rowE + " " + colE + "\r\n";
+                textBox2.Text = historyOfdroids;
+                addLinks(rowS, colS, rowE, colE);
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+
+            }
+            else if (tokens[0] == "Clear" && droidReady == true)
+            {
+
+                textBox1.Text = "Are you sure you want to clear the screen? Please say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "I could not hear you. Are you sure you want to clear the screen? Please say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //Clear logic                  
+                    clear();
+                    textBox1.Text = "Clear";
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
+                }
+
+                droidReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                this.Focus();
+                
+            }
+            else if (tokens[0] == "Undo" && droidReady == true)
+            {
+                textBox1.Text = e.Result.Text;
+                historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfdroids;
+                droidReady = false;
+
+                //UNDO LOGIC
+                if (currStart == currEnd)
+                {
+                    textBox1.Text = "No previous state exits.";
+                }
+                else
+                    undo();
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Redo" && droidReady == true)
+            {
+
+                textBox1.Text = e.Result.Text;
+                historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                textBox2.Text = historyOfdroids;
+                droidReady = false;
+
+                //REDO LOGIC
+                if (currStart2 == currEnd2)
+                {
+                    textBox1.Text = "No future state exits.";
+                }
+                else
+                    redo();
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Remove" && tokens[1] == "gate" && droidReady == true)
+            {
+                if (GetNumber(tokens[3]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (GetNumber(tokens[5]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+              
+
+                if (!layout.ContainsKey("R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5])))
+                {
+                    textBox1.Text = "No gate to remove in slot R" + GetNumber(tokens[3]) + " C" + GetNumber(tokens[5]);
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    droidReady = false;
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+                    this.Focus();
+                    return;
+                }
+                
+                textBox1.Text = "Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";                
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+               
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "I could not hear you. Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize(); 
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //remove logic                    
+                    removeGates("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]));
+                    textBox1.Text = "Remove Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
+                }
+
+                droidReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                
+                this.Focus();
+                
+            }
+            else if (tokens[0] == "Remove" && tokens[1] == "link" && droidReady == true)
+            {
+                if (GetNumber(tokens[3]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[2]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+                if (GetNumber(tokens[5]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[4]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+                if (GetNumber(tokens[7]) > 6)
+                {
+                    textBox1.Text = "Illegal location R" + GetNumber(tokens[6]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+
+                }
+                if (GetNumber(tokens[9]) > 16)
+                {
+                    textBox1.Text = "Illegal location C" + GetNumber(tokens[8]) + ", Try Again";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+
+                }
+
+                bool src = false;
+                foreach (int index in links.Keys)
+                {
+                    LinkDirections temp = links[index];
+                    if (temp.x == GetNumber(tokens[3]) && temp.y == GetNumber(tokens[5])+1 && temp.destX == GetNumber(tokens[7]) && temp.destY == GetNumber(tokens[9]))
+                    {
+                        src = true;
+                        break;
+                    }
+
+                }
+
+                if (src == false)
+                {
+                    textBox1.Text = "Link R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5]) + " R" + GetNumber(tokens[7]) + "C" + GetNumber(tokens[9]) + " does not Exists!";
+                    textBox1.Enabled = true;
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                    return;
+                }
+
+
+                
+                textBox1.Text = "Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "I could not hear you. Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    //remove logic                    
+                    removeLinks("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]) , "R" + GetNumber(tokens[7]) , "C" + GetNumber(tokens[9]));
+                    textBox1.Text = "Remove Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
+                    historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    textBox2.Text = historyOfdroids;
+                }
+                               
+                droidReady = false;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else if (tokens[0] == "Exit" && droidReady == true)
+            {
+                textBox1.Text = "Are you sure you want to Exit? Please say yes or no!";
+                textBox1.Enabled = true;
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Red;
+                this.Focus();
+
+                SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
+
+                //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
+                recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
+                recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
+                recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                GrammarBuilder yes = new GrammarBuilder("yes");
+                GrammarBuilder no = new GrammarBuilder("no");
+                Grammar _yes = new Grammar(yes);
+                Grammar _no = new Grammar(no);
+                recognizerYesNo.LoadGrammarAsync(_yes);
+                recognizerYesNo.LoadGrammarAsync(_no);
+
+                recognizerYesNo.Recognize();
+
+                while (yesNoForRemoveGateOrLink == "invalid")
+                {
+                    textBox1.Text = "I could not hear you. Are you sure you want to Exit? Please say yes or no!";
+                    textBox1.BackColor = Color.White;
+                    textBox1.ForeColor = Color.Red;
+                    this.Focus();
+                    recognizerYesNo.Recognize();
+                }
+
+                textBox1.Clear();
+                textBox1.BackColor = Color.White;
+                textBox1.ForeColor = Color.Black;
+
+                if (yesNoForRemoveGateOrLink == "yes")
+                {
+                    Environment.Exit(0);    
+                }
+                
+
+                //Exit logic
+
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
+            else
+            {
+                droidReady = false;
+                textBox1.Text = "Please say 'droid' before the expression.";
+                textBox2.Text = historyOfdroids;
+                if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                    secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                this.Focus();
+            }
       
+        }
+
+        public void SpeechRecognizedForYesNo(object sender, SpeechRecognizedEventArgs e)
+        {
+            yesNoForRemoveGateOrLink = e.Result.Text;            
+        }
+
+        public void SpeechRejectedForYesNo(object sender, SpeechRecognitionRejectedEventArgs e)
+        {
+            yesNoForRemoveGateOrLink = "invalid"; 
         }
 
         public void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
         {
             //Console.WriteLine("Speech input failed");
-            MessageBox.Show("Failed");
+            droidReady = false;
+
+            if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
+                secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+
+            textBox1.Text = "Failed to recognize input. Please try again, start with the word droid ";            
+            this.Focus();
         }
 
         public int GetNumber(string numberString)
@@ -472,33 +1112,128 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-
             addGates("and", "R0", "C0");
-            addGates("nor", "R5", "C8");
-            addLinks("R0", "C0", "R5", "C8");
+            addGates("nand", "R1", "C1");
+            addLinks("R0", "C0", "R1", "C1");
+            /*clear();
+            addGates("and", "R0", "C0");*/
+            RecognizeSpeech();
+            
+
+            /*addGates("or", "R1", "C0");
+            addGates("not", "R6", "C8");
+            addLinks("R1", "C0", "R6", "C8");*/
+            //removeGates("R0", "C0");
+            //removeLinks("R0", "C0", "R3", "C8");
+            /*addGates("xor", "R2", "C3");
+            addGates("nand", "R3", "C4");
+            addLinks("R2", "C3", "R3", "C4");
+
+            addGates("xor", "R5", "C3");
+            addGates("nand", "R5", "C5");
+            addLinks("R5", "C3", "R5", "C5");
+
+            addGates("and", "R5", "C0");
+            addGates("nor", "R4", "C1");
+            addLinks("R5", "C0", "R4", "C1");
+            
+            //failed test 
+            /*addGates("xor", "R5", "C9");
+            addGates("nand", "R5", "C10");
+            addLinks("R5", "C9", "R5", "C10");*/
+            
+
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
-            //addGates("xor", "R0", "C3");
-            //addGates("nand", "R0", "C4");
-            
-            //addGates("xnor", "R0", "C10");
-            //addGates("xnor", "R7", "C19");
+            //addGates("xnor", "R0", "C7");
+            //addGates("xnor", "R5", "C7");
+            //addLinks("R0", "C7", "R5", "C7");
         }
+
+        public void clear()
+        {
+            addToUndoStack();
+            layout = new Dictionary<String, Layout>();
+            links = new Dictionary<int, LinkDirections>();
+            clObject = new ConnectLink(clObject.m, clObject.n, clObject.maxLinks);
+            linkCnt = 0;
+        }
+
+        public void removeGates(String row, String col)
+        {
+            //row and col should be of the format R0 and C1 
+            int x = Convert.ToInt32(row.Substring(1));
+            int y = Convert.ToInt32(col.Substring(1));
+            addToUndoStack();
+
+            for (int index = 0; index < layout[row + col].output.Count; index++)
+            {
+                removeLink((int)layout[row + col].output[index]);
+            }
+
+            for (int index = 0; index < layout[row + col].input.Count; index++)
+            {
+                removeLink((int)layout[row + col].input[index]);
+            }
+            layout.Remove(row + col);
+            this.Invalidate();
+        }
+        //add
+        /* public void DrawLinks(int startx,int starty,int endx,int endy){    
+             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
+             connectGates(startx,starty, ld.directions, ld.offset);
+         }*/
+
+        public void removeLink(int index)
+        {
+            String source = "R" + links[index].x + "C" + (links[index].y - 1);
+            String dest = "R" + links[index].destX + "C" + links[index].destY;
+
+            layout[source].output.Remove(index);
+            layout[dest].input.Remove(index);
+
+            links.Remove(index);
+        }
+
+        public void removeLinks(String row, String col, String rowDest, String colDest)
+        {
+            //row and col should be of the format R0 and C1 
+            int x = Convert.ToInt32(row.Substring(1));
+            int y = Convert.ToInt32(col.Substring(1)) + 1;
+            int xDest = Convert.ToInt32(rowDest.Substring(1));
+            int yDest = Convert.ToInt32(colDest.Substring(1));
+            addToUndoStack();
+            int sol = -1;
+            foreach (int index in links.Keys)
+            {
+                LinkDirections temp = links[index];
+                if (temp.x == x && temp.y == y && temp.destX == xDest && temp.destY == yDest)
+                {
+                    sol = index;
+                    break;
+                }
+
+            }
+            removeLink(sol);
+
+            this.Invalidate();
+            this.Focus();
+        }
+
         private void undo()
         {
-            
             removeFromUndoStack();
         }
         private void redo()
         {
-            
             removeFromRedoStack();
         }
+        
         public void addToUndoStack()
         {
             StackData s = new StackData(CloneDictionaryLayout(layout),
                 CloneDictionaryLinks(links), new ConnectLink(clObject.m, clObject.n, clObject.maxLinks), linkCnt);
-            if (currEnd - currStart +1 >= 5)
+            if (currEnd - currStart + 1 >= 5)
             {
                 currStart++;
             }
@@ -507,7 +1242,7 @@ namespace DigitalCircuitDesign
         }
         private void addToUndoStack(StackData s)
         {
-            if (currEnd - currStart +1 >= 5)
+            if (currEnd - currStart + 1 >= 5)
             {
                 currStart++;
             }
@@ -516,7 +1251,7 @@ namespace DigitalCircuitDesign
         }
         public void removeFromUndoStack()
         {
-            if (currEnd >currStart)
+            if (currEnd > currStart)
             {
                 addToRedoStack();
                 StackData temp = arr[(currEnd - 1) % 5];
@@ -545,7 +1280,7 @@ namespace DigitalCircuitDesign
         }
         private void addToRedoStack(StackData s)
         {
-            if (currEnd2 - currStart2+1 >= 5)
+            if (currEnd2 - currStart2 + 1 >= 5)
             {
                 currStart2++;
             }
@@ -554,7 +1289,7 @@ namespace DigitalCircuitDesign
         }
         public void removeFromRedoStack()
         {
-            if (currEnd2 > currStart2 )
+            if (currEnd2 > currStart2)
             {
                 addToUndoStack();
                 StackData temp = arr2[(currEnd2 - 1) % 5];
@@ -574,7 +1309,6 @@ namespace DigitalCircuitDesign
 
         private void button2_Click(object sender, EventArgs e)
         {
-            
             undo();
         }
 
@@ -582,7 +1316,8 @@ namespace DigitalCircuitDesign
         {
             redo();
         }
-        private static Dictionary<string,Layout> CloneDictionaryLayout(Dictionary<string,Layout> original) 
+
+        private static Dictionary<string, Layout> CloneDictionaryLayout(Dictionary<string, Layout> original)
         {
             Dictionary<string, Layout> ret = new Dictionary<string, Layout>(original.Count,
                                                                     original.Comparer);
@@ -631,7 +1366,6 @@ namespace DigitalCircuitDesign
 
         public int[] offset;
         public char[] directions;
-
         public LinkDirections()
         {
         }
@@ -664,6 +1398,7 @@ namespace DigitalCircuitDesign
             }
             return s;
         }
+
     }
 
     //Add
@@ -788,9 +1523,10 @@ namespace DigitalCircuitDesign
         public Gates type;
         public ArrayList input;
         public ArrayList output;
-
-        public Layout(){
+        public Layout()
+        {
         }
+
         public Layout(int x, int y, Gates type)
         {
             this.xcord = x;
@@ -801,22 +1537,23 @@ namespace DigitalCircuitDesign
         }
         public Layout copy(Layout input)
         {
-        Layout n=new Layout();
-        n.xcord = input.xcord;
-        n.ycord = input.ycord;
-        n.type = input.type;
-        n.input = new ArrayList(input.input.Count);
-        for (int i = 0; i < input.input.Count; i++)
-        {
-            n.input.Insert(i,input.input[i]);
+            Layout n = new Layout();
+            n.xcord = input.xcord;
+            n.ycord = input.ycord;
+            n.type = input.type;
+            n.input = new ArrayList(input.input.Count);
+            for (int i = 0; i < input.input.Count; i++)
+            {
+                n.input.Insert(i, input.input[i]);
+            }
+            n.output = new ArrayList(input.output.Count);
+            for (int i = 0; i < input.output.Count; i++)
+            {
+                n.output.Insert(i, input.output[i]);
+            }
+            return n;
         }
-        n.output = new ArrayList(input.output.Count);
-        for (int i = 0; i < input.output.Count; i++)
-        {
-            n.output.Insert(i, input.output[i]);
-        }
-        return n;
-        }
+
     }
 
     enum Gates{AND,OR,EXOR,NOT,NAND,NOR};
