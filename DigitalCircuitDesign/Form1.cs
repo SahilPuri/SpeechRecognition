@@ -286,7 +286,7 @@ namespace DigitalCircuitDesign
                    // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
                    // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
 
-                int nextOffset = (i != path.Length - 1)?(offset[i+1]==0)?0:offset[i+1]+5:0;
+                int nextOffset = (i != path.Length - 1)?(offset[i+1]==0)?0:offset[i+1]+10:0;
                 //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {

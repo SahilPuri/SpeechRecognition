@@ -37,12 +37,12 @@
             // 
             this.textBox1.Font = new System.Drawing.Font("Verdana", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBox1.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.textBox1.Location = new System.Drawing.Point(424, 574);
+            this.textBox1.Location = new System.Drawing.Point(270, 574);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox1.Size = new System.Drawing.Size(372, 56);
+            this.textBox1.Size = new System.Drawing.Size(526, 130);
             this.textBox1.TabIndex = 2;
             // 
             // button1
@@ -56,11 +56,11 @@
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(802, 547);
+            this.textBox2.Location = new System.Drawing.Point(802, 574);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
             this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox2.Size = new System.Drawing.Size(182, 113);
+            this.textBox2.Size = new System.Drawing.Size(225, 130);
             this.textBox2.TabIndex = 3;
             this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
             // 
@@ -70,7 +70,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(969, 653);
+            this.ClientSize = new System.Drawing.Size(1039, 708);
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox1);
