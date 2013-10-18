@@ -149,7 +149,17 @@ namespace DigitalCircuitDesign
                         addImage(x, y, lay.xcord, lay.ycord, "xor.jpg");
                         break;
                     case Gates.SOURCE:
-                        addImage(x, y, lay.xcord, lay.ycord, "source.jpg");
+                        switch(lay.sourceno){
+                            case "A": addImage(x, y, lay.xcord, lay.ycord, "A.jpg"); break;
+                            case "B": addImage(x, y, lay.xcord, lay.ycord, "B.jpg"); break;
+                            case "C": addImage(x, y, lay.xcord, lay.ycord, "C.jpg"); break;
+                            case "D": addImage(x, y, lay.xcord, lay.ycord, "D.jpg"); break;
+                            case "E": addImage(x, y, lay.xcord, lay.ycord, "E.jpg"); break;
+                            case "F": addImage(x, y, lay.xcord, lay.ycord, "F.jpg"); break;
+                            case "G": addImage(x, y, lay.xcord, lay.ycord, "G.jpg"); break;
+                            default:
+                                addImage(x, y, lay.xcord, lay.ycord, "source.jpg");break;
+                        }
                         break;
                     case Gates.OUTPUT:
                         addImage(x, y, lay.xcord, lay.ycord, "destination.jpg");
@@ -189,7 +199,7 @@ namespace DigitalCircuitDesign
         
 
         //replace
-        public void addGates(String gate, String row, String col)
+        public void addGates(String gate, String row, String col,String sourceno)
         {
             //row and col should be of the format R0 and C1 
             int x = Convert.ToInt32(row.Substring(1));
@@ -210,7 +220,7 @@ namespace DigitalCircuitDesign
                     //case "xnor": array[x, y] = "XN"; break;
                 }
                 addToUndoStack();
-                layout.Add(row+col, new Layout(x, y, type));
+                layout.Add(row+col, new Layout(x, y, type,sourceno));
             }
             this.Invalidate();
         }
@@ -1119,27 +1129,27 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            addGates("and", "R0", "C0");
-            addGates("nor", "R3", "C8");
+            addGates("and", "R0", "C0","");
+            addGates("nor", "R3", "C8", "");
             addLinks("R0", "C0", "R3", "C8");
 
-            addGates("or", "R1", "C0");
-            addGates("not", "R6", "C8");
+            addGates("or", "R1", "C0", "");
+            addGates("not", "R6", "C8", "");
             addLinks("R1", "C0", "R6", "C8");
 
-            addGates("xor", "R2", "C3");
-            addGates("nand", "R3", "C4");
+            addGates("xor", "R2", "C3", "");
+            addGates("nand", "R3", "C4", "");
             addLinks("R2", "C3", "R3", "C4");
 
-            addGates("xor", "R5", "C3");
-            addGates("nand", "R5", "C5");
+            addGates("xor", "R5", "C3", "");
+            addGates("nand", "R5", "C5", "");
             addLinks("R5", "C3", "R5", "C5");
 
-            addGates("and", "R5", "C0");
-            addGates("nor", "R4", "C1");
+            addGates("and", "R5", "C0", "");
+            addGates("nor", "R4", "C1", "");
             addLinks("R5", "C0", "R4", "C1");
 
-            addGates("source","R0","C10");
+            addGates("source", "R0", "C10", "");
             addLinks("R4", "C1", "R0", "C10");
 
             /*addGates("and", "R0", "C0");
@@ -1551,17 +1561,19 @@ namespace DigitalCircuitDesign
         public int xcord;
         public int ycord;
         public Gates type;
+        public String sourceno;
         public ArrayList input;
         public ArrayList output;
         public Layout()
         {
         }
 
-        public Layout(int x, int y, Gates type)
+        public Layout(int x, int y, Gates type,String sourceno)
         {
             this.xcord = x;
             this.ycord = y;
             this.type = type;
+            this.sourceno = sourceno;
             this.input = new ArrayList();
             this.output = new ArrayList();
         }
