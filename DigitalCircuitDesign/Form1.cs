@@ -33,7 +33,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "E:/Workspace/VisualStudio/SpeechRecognition-master/DigitalCircuitDesign/images/";
+        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
@@ -576,7 +576,12 @@ namespace DigitalCircuitDesign
                 row = row + r;
                 column = column + c;
 
-                addGates(gate, row, column);
+                switch (gate)
+                {
+                    case "source": addGates(gate, row, column,"A"); break;
+                    default: addGates(gate, row, column,""); break;
+                }
+                
                 textBox1.Text = "Insert " + gate.ToUpper() + " R" + r + " C" + c;                              
                 droidReady = false;
                 historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper()+ " R" + r + " C" + c + "\r\n";
@@ -1149,7 +1154,7 @@ namespace DigitalCircuitDesign
             addGates("nor", "R4", "C1", "");
             addLinks("R5", "C0", "R4", "C1");
 
-            addGates("source", "R0", "C10", "");
+            addGates("source", "R0", "C10", "A");
             addLinks("R4", "C1", "R0", "C10");
 
             /*addGates("and", "R0", "C0");
