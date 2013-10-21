@@ -52,7 +52,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(116, 95);
             this.Controls.Add(this.pictureBox1);
-            this.Location = new System.Drawing.Point(270, 565);
+            this.Location = new System.Drawing.Point(252, 590);
             this.Name = "SecondUIThreadForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "SecondUIThreadForm";

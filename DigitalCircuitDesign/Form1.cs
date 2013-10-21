@@ -21,6 +21,7 @@ namespace DigitalCircuitDesign
         bool droidReady = false;
         string historyOfdroids = "Command History: \r\n";
         string yesNoForRemoveGateOrLink;
+        int sourceAlphabet = 65;
 
 
         int nWidth = 17;
@@ -33,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "C:/Users/Sail/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "C:/Users/patrick/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -578,7 +579,7 @@ namespace DigitalCircuitDesign
                 column = column + c;
                 switch (gate)
                 {
-                    case "source": addGates(gate, row, column, "A"); break;
+                    case "source": String source = ((char)sourceAlphabet).ToString(); addGates(gate, row, column, source); sourceAlphabet += 1; break;
                     default: addGates(gate, row, column, ""); break;
                 }
 
@@ -1135,18 +1136,26 @@ namespace DigitalCircuitDesign
         private void button1_Click(object sender, EventArgs e)
         {
             /*
-            addGates("and", "R0", "C0", "");
-            addGates("nor", "R3", "C8", "");
-            addLinks("R0", "C0", "R3", "C8");
+            addGates("source", "R0", "C4", "A");
+            addGates("source", "R2", "C4", "B");
+            addGates("or", "R1", "C6", "");
+            addLinks("R0", "C4", "R1", "C6");
+            addLinks("R2", "C4", "R1", "C6");
 
-            addGates("or", "R1", "C0", "");
-            addGates("not", "R6", "C8", "");
-            addLinks("R1", "C0", "R6", "C8");
+            addGates("source", "R3", "C4", "C");
+            addGates("source", "R5", "C4", "D");
+            addGates("or", "R4", "C6", "");
+            addLinks("R3", "C4", "R4", "C6");
+            addLinks("R5", "C4", "R4", "C6");
 
-            addGates("xor", "R2", "C3", "");
-            addGates("nand", "R3", "C4", "");
-            addLinks("R2", "C3", "R3", "C4");
 
+            addGates("and", "R3", "C8", "");
+            addLinks("R1", "C6", "R3", "C8");
+            addLinks("R4", "C6", "R3", "C8");
+            
+            addGates("output", "R3", "C11", "");
+            addLinks("R3", "C8", "R3", "C11");
+            
             addGates("xor", "R5", "C3", "");
             addGates("nand", "R5", "C5", "");
             addLinks("R5", "C3", "R5", "C5");
@@ -1167,7 +1176,7 @@ namespace DigitalCircuitDesign
             addLinks("R6", "C8", "R1", "C10");
             addLinks("R3", "C8", "R1", "C10");
 
-*/
+            */
             RecognizeSpeech();
 
 
