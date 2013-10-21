@@ -13,7 +13,7 @@ using System.Speech.Recognition;
 using System.Windows.Forms.VisualStyles;
 
 namespace DigitalCircuitDesign
-{  
+{
     public partial class Form1 : Form
     {
 
@@ -21,7 +21,7 @@ namespace DigitalCircuitDesign
         bool droidReady = false;
         string historyOfdroids = "Command History: \r\n";
         string yesNoForRemoveGateOrLink;
-        
+
 
         int nWidth = 17;
         int nHeight = 7;
@@ -33,15 +33,15 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "C:/Users/Sail/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
-        Dictionary<String,Layout> layout = new Dictionary<String,Layout>();
+        Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
         Dictionary<int, LinkDirections> links = new Dictionary<int, LinkDirections>();
         ConnectLink clObject;
         int linkCnt = 0;
         /*End of State of the System*/
-        
+
         /*state history*/
         StackData[] arr = new StackData[5];
         int currStart = 0;
@@ -55,12 +55,12 @@ namespace DigitalCircuitDesign
 
         public Form1()
         {
-            picHeightError += (height-55)/2;
-            outPinWidth+=(width-70)/2;
-            inPinWidth += (width-70)/2;
+            picHeightError += (height - 55) / 2;
+            outPinWidth += (width - 70) / 2;
+            inPinWidth += (width - 70) / 2;
             InitializeComponent();
             clearScreen();
-            clObject = new ConnectLink(nHeight, nWidth,2);
+            clObject = new ConnectLink(nHeight, nWidth, 2);
             textBox2.Text = historyOfdroids;
         }
         protected override void OnPaint(PaintEventArgs e)
@@ -121,7 +121,7 @@ namespace DigitalCircuitDesign
         {
             foreach (LinkDirections ld in links.Values)
             {
-                connectGates(ld.x, ld.y, ld.destX,ld.destY, ld.directions, ld.offset);
+                connectGates(ld.x, ld.y, ld.destX, ld.destY, ld.directions, ld.offset);
             }
             foreach (Layout lay in layout.Values)
             {
@@ -149,7 +149,8 @@ namespace DigitalCircuitDesign
                         addImage(x, y, lay.xcord, lay.ycord, "xor.jpg");
                         break;
                     case Gates.SOURCE:
-                        switch(lay.sourceno){
+                        switch (lay.sourceno)
+                        {
                             case "A": addImage(x, y, lay.xcord, lay.ycord, "A.jpg"); break;
                             case "B": addImage(x, y, lay.xcord, lay.ycord, "B.jpg"); break;
                             case "C": addImage(x, y, lay.xcord, lay.ycord, "C.jpg"); break;
@@ -158,7 +159,7 @@ namespace DigitalCircuitDesign
                             case "F": addImage(x, y, lay.xcord, lay.ycord, "F.jpg"); break;
                             case "G": addImage(x, y, lay.xcord, lay.ycord, "G.jpg"); break;
                             default:
-                                addImage(x, y, lay.xcord, lay.ycord, "source.jpg");break;
+                                addImage(x, y, lay.xcord, lay.ycord, "source.jpg"); break;
                         }
                         break;
                     case Gates.OUTPUT:
@@ -189,14 +190,14 @@ namespace DigitalCircuitDesign
             if (box == null)
             {
                 box = new PictureBox();
-                box.Location = new Point(x+inPinWidth, y+picHeightError);
-                box.Size = new Size(width-inPinWidth-outPinWidth, height - (picHeightError*2));
-                box.Parent = this;  
+                box.Location = new Point(x + inPinWidth, y + picHeightError);
+                box.Size = new Size(width - inPinWidth - outPinWidth, height - (picHeightError * 2));
+                box.Parent = this;
                 pic[xcord, ycord] = box;
             }
             box.Image = Image.FromFile(imageLocation);
         }
-        
+
 
         //replace
         public void addGates(String gate, String row, String col,String sourceno)
@@ -220,7 +221,7 @@ namespace DigitalCircuitDesign
                     //case "xnor": array[x, y] = "XN"; break;
                 }
                 addToUndoStack();
-                layout.Add(row+col, new Layout(x, y, type,sourceno));
+                layout.Add(row + col, new Layout(x, y, type, sourceno));
             }
             this.Invalidate();
         }
@@ -235,21 +236,21 @@ namespace DigitalCircuitDesign
             int yEnd = Convert.ToInt32(colEnd.Substring(1));
 
             LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
-            links.Add(linkCnt,ld);
-            
+            links.Add(linkCnt, ld);
+
             layout[rowStart + colStart].output.Add(linkCnt);
             layout[rowEnd + colEnd].input.Add(linkCnt);
             linkCnt++;
             this.Invalidate();
         }
 
-          
+
         //add
-       /* public void DrawLinks(int startx,int starty,int endx,int endy){    
-            LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
-            connectGates(startx,starty, ld.directions, ld.offset);
-        }*/
-        public void connectGates(int rowS, int colS, int rowE,int colE, char[] path, int[] offset)
+        /* public void DrawLinks(int startx,int starty,int endx,int endy){    
+             LinkDirections ld = clObject.shortestpath(startx,starty,endx,endy);
+             connectGates(startx,starty, ld.directions, ld.offset);
+         }*/
+        public void connectGates(int rowS, int colS, int rowE, int colE, char[] path, int[] offset)
         {
             //lasth and v offset keep track of recent offset difference
             int lasthoffset = 0, lastvoffset = 0;
@@ -288,15 +289,15 @@ namespace DigitalCircuitDesign
             //rest of the points
             points[i++] = new Point(currx, curry);
 
-            
+
             //calculate remaining points
-            for (i=0; i < path.Length; i++)
+            for (i = 0; i < path.Length; i++)
             {
                 //int nextOffset = (i != path.Length - 1 &&
-                   // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
-                   // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
+                // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
+                // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
 
-                int nextOffset = (i != path.Length - 1)?(offset[i+1]==0)?0:offset[i+1]+10:0;
+                int nextOffset = (i != path.Length - 1) ? (offset[i + 1] == 0) ? 0 : offset[i + 1] + 5 : 0;
                 //also avoids the small offset difference that gets accumulated till the end
                 switch (path[i])
                 {
@@ -306,11 +307,11 @@ namespace DigitalCircuitDesign
                     case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
                 }
                 //make the second point void if component is upwards and first point is downwards
-                if (i == 0 && i!=path.Length-1 && currx == points[i + 2].X)
+                if (i == 0 && i != path.Length - 1 && currx == points[i + 2].X)
                 {
-                        points[i + 2] = new Point(currx, curry);
+                    points[i + 2] = new Point(currx, curry);
                 }
-                else if (i == (path.Length - 1) && currx==points[i+2].X)
+                else if (i == (path.Length - 1) && currx == points[i + 2].X)
                 {
                     if (points[i + 2].Y < curry)
                     {
@@ -325,24 +326,24 @@ namespace DigitalCircuitDesign
                     }
                 }
                 points[i + 3] = new Point(currx, curry);
-              }
+            }
             //connect last point with the gate
 
             if (curry <= ((height * rowE) + start + (height / 2)))
             {
                 //comp is down
-                points[i + 3] = new Point(currx, curry + (height/4));
+                points[i + 3] = new Point(currx, curry + (height / 4));
                 i++;
-                points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2)-5));
+                points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2) - 5));
             }
             else
             {
                 //comp is up
-                points[i + 3] = new Point(currx, curry - (height/4));
+                points[i + 3] = new Point(currx, curry - (height / 4));
                 i++;
-                points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2)-5));
+                points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
             }
-            
+
             //textBox1.Text += points[i + 3].X;
             /*
             int arrowSize = 0;
@@ -377,7 +378,7 @@ namespace DigitalCircuitDesign
             this.CreateGraphics().DrawLines(myPen, points);
         }
 
-        
+
         public void DrawLShapeLine(System.Drawing.Graphics g, int intMarginLeft, int intMarginTop, int intWidth, int intHeight)
         {
             Pen myPen = new Pen(Color.Black);
@@ -404,22 +405,22 @@ namespace DigitalCircuitDesign
 
         public void RecognizeSpeech()
         {
-            SpeechRecognitionEngine recognizer = new SpeechRecognitionEngine();                     
+            SpeechRecognitionEngine recognizer = new SpeechRecognitionEngine();
 
             recognizer.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
             recognizer.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognized);
-            recognizer.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejected);  
+            recognizer.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejected);
             recognizer.SetInputToDefaultAudioDevice();
 
             GrammarBuilder clear = new GrammarBuilder("Clear");
             GrammarBuilder undo = new GrammarBuilder("Undo");
             GrammarBuilder redo = new GrammarBuilder("Redo");
             GrammarBuilder exit = new GrammarBuilder("Exit");
-            
+
             GrammarBuilder insert = new GrammarBuilder("Insert");
             Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand", "source", "output" });
-            Choices columns = new Choices(new string[] { "zero","one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
-            Choices rows = new Choices(new string[] { "zero" ,"one", "two", "three", "four", "five", "six", "seven", "eight", "nine" });
+            Choices columns = new Choices(new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
+            Choices rows = new Choices(new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" });
             //Choices orientation = new Choices(new string[] { "left", "right", "up", "down" });
             insert.Append(gates);
             insert.Append("R");
@@ -448,7 +449,7 @@ namespace DigitalCircuitDesign
             removeGate.Append(rows);
             removeGate.Append("C");
             removeGate.Append(columns);
-            
+
             GrammarBuilder removeLink = new GrammarBuilder("Remove");
             removeLink.Append("link");
             removeLink.Append("R");
@@ -459,12 +460,12 @@ namespace DigitalCircuitDesign
             removeLink.Append(rows);
             removeLink.Append("C");
             removeLink.Append(columns);
-            
+
 
 
             GrammarBuilder droidStart = new GrammarBuilder("droid");
-            
-            
+
+
             Grammar _clear_grammar = new Grammar(clear);
             Grammar _insert_grammar = new Grammar(insert);
             Grammar _connect_grammar = new Grammar(connect);
@@ -484,15 +485,15 @@ namespace DigitalCircuitDesign
             recognizer.LoadGrammarAsync(_exit);
             recognizer.LoadGrammarAsync(_removeGate);
             recognizer.LoadGrammarAsync(_removeLink);
-            
+
             //recognizer.RecognizeAsync(RecognizeMode.Multiple);
             while (true)
             {
                 recognizer.Recognize();
             }
-            
+
         }
-            
+
         public void LoadGrammarCompleted(object sender, LoadGrammarCompletedEventArgs e)
         {
             //Console.WriteLine(e.Grammar.Name + " successfully loaded");            
@@ -504,20 +505,20 @@ namespace DigitalCircuitDesign
             string droid = e.Result.Text;
             string[] tokens = droid.Split(' ');
             textBox1.ForeColor = Color.Black;
-            
+
             if (tokens[0] == "droid")
             {
-               textBox1.Text = "Ready!!!. Listening..";
+                textBox1.Text = "Ready!!!. Listening..";
 
-               if (secondThreadForm == null || !secondThreadForm.IsHandleCreated)
+                if (secondThreadForm == null || !secondThreadForm.IsHandleCreated)
                 {
                     secondThreadForm = SecondUIThreadForm.Create();
-                    secondThreadForm.Focus(); 
+                    secondThreadForm.Focus();
                     droidReady = true;
                 }
-               
+
             }
-            
+
             else if (tokens[0] == "Insert" && droidReady == true)
             {
                 if (tokens.Length != 6)
@@ -546,7 +547,7 @@ namespace DigitalCircuitDesign
 
                 if (c > 16)
                 {
-                    textBox1.Text = "Illegal location C"+c+", Try Again";
+                    textBox1.Text = "Illegal location C" + c + ", Try Again";
                     textBox1.Enabled = true;
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
@@ -559,7 +560,7 @@ namespace DigitalCircuitDesign
 
                 if (layout.ContainsKey(row + r + column + c))
                 {
-                    textBox1.Text = "A gate already exits in the slot R"+r+" C"+c;
+                    textBox1.Text = "A gate already exits in the slot R" + r + " C" + c;
                     textBox1.Enabled = true;
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
@@ -572,19 +573,18 @@ namespace DigitalCircuitDesign
                     return;
                 }
 
-                
+
                 row = row + r;
                 column = column + c;
-
                 switch (gate)
                 {
-                    case "source": addGates(gate, row, column,"A"); break;
-                    default: addGates(gate, row, column,""); break;
+                    case "source": addGates(gate, row, column, "A"); break;
+                    default: addGates(gate, row, column, ""); break;
                 }
-                
-                textBox1.Text = "Insert " + gate.ToUpper() + " R" + r + " C" + c;                              
+
+                textBox1.Text = "Insert " + gate.ToUpper() + " R" + r + " C" + c;
                 droidReady = false;
-                historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper()+ " R" + r + " C" + c + "\r\n";
+                historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper() + " R" + r + " C" + c + "\r\n";
                 textBox2.Text = historyOfdroids;
 
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
@@ -635,7 +635,7 @@ namespace DigitalCircuitDesign
                     if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                         secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                     return;
-                    
+
                 }
                 if (GetNumber(tokens[8]) > 16)
                 {
@@ -647,12 +647,12 @@ namespace DigitalCircuitDesign
                     if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                         secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                     return;
-                    
+
                 }
 
-                if (!layout.ContainsKey("R"+GetNumber(tokens[2])+"C"+GetNumber(tokens[4])))
+                if (!layout.ContainsKey("R" + GetNumber(tokens[2]) + "C" + GetNumber(tokens[4])))
                 {
-                    textBox1.Text = "Please add gate in slot R"+GetNumber(tokens[2])+" C"+GetNumber(tokens[4])+" before connecting";
+                    textBox1.Text = "Please add gate in slot R" + GetNumber(tokens[2]) + " C" + GetNumber(tokens[4]) + " before connecting";
                     textBox1.Enabled = true;
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
@@ -684,7 +684,7 @@ namespace DigitalCircuitDesign
                 foreach (int index in links.Keys)
                 {
                     LinkDirections temp = links[index];
-                    if (temp.x == GetNumber(tokens[2]) && temp.y == GetNumber(tokens[4])+1 && temp.destX == GetNumber(tokens[6]) && temp.destY == GetNumber(tokens[8]))
+                    if (temp.x == GetNumber(tokens[2]) && temp.y == GetNumber(tokens[4]) + 1 && temp.destX == GetNumber(tokens[6]) && temp.destY == GetNumber(tokens[8]))
                     {
                         textBox1.Text = "Link R" + GetNumber(tokens[2]) + " C" + GetNumber(tokens[4]) + "R" + GetNumber(tokens[6]) + " C" + GetNumber(tokens[8]) + " already Exists, Choose another one!";
                         textBox1.Enabled = true;
@@ -692,8 +692,8 @@ namespace DigitalCircuitDesign
                         textBox1.ForeColor = Color.Red;
                         this.Focus();
                         if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
-                        secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
-                    return;
+                            secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
+                        return;
                     }
 
                 }
@@ -761,7 +761,7 @@ namespace DigitalCircuitDesign
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
                 this.Focus();
-                
+
             }
             else if (tokens[0] == "Undo" && droidReady == true)
             {
@@ -826,7 +826,7 @@ namespace DigitalCircuitDesign
                         secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                     return;
                 }
-              
+
 
                 if (!layout.ContainsKey("R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5])))
                 {
@@ -842,13 +842,13 @@ namespace DigitalCircuitDesign
                     this.Focus();
                     return;
                 }
-                
-                textBox1.Text = "Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";                
+
+                textBox1.Text = "Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
                 this.Focus();
-               
+
                 SpeechRecognitionEngine recognizerYesNo = new SpeechRecognitionEngine();
 
                 //recognizerYesNo.LoadGrammarCompleted += new EventHandler<LoadGrammarCompletedEventArgs>(LoadGrammarCompleted);
@@ -871,7 +871,7 @@ namespace DigitalCircuitDesign
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
-                    recognizerYesNo.Recognize(); 
+                    recognizerYesNo.Recognize();
                 }
 
                 textBox1.Clear();
@@ -881,7 +881,7 @@ namespace DigitalCircuitDesign
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
                     //remove logic                    
-                    removeGates("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]));
+                    removeGates("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]));
                     textBox1.Text = "Remove Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
@@ -890,9 +890,9 @@ namespace DigitalCircuitDesign
                 droidReady = false;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
-                
+
                 this.Focus();
-                
+
             }
             else if (tokens[0] == "Remove" && tokens[1] == "link" && droidReady == true)
             {
@@ -948,7 +948,7 @@ namespace DigitalCircuitDesign
                 foreach (int index in links.Keys)
                 {
                     LinkDirections temp = links[index];
-                    if (temp.x == GetNumber(tokens[3]) && temp.y == GetNumber(tokens[5])+1 && temp.destX == GetNumber(tokens[7]) && temp.destY == GetNumber(tokens[9]))
+                    if (temp.x == GetNumber(tokens[3]) && temp.y == GetNumber(tokens[5]) + 1 && temp.destX == GetNumber(tokens[7]) && temp.destY == GetNumber(tokens[9]))
                     {
                         src = true;
                         break;
@@ -969,8 +969,8 @@ namespace DigitalCircuitDesign
                 }
 
 
-                
-                textBox1.Text = "Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+
+                textBox1.Text = "Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -994,7 +994,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "I could not hear you. Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5])+" to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -1008,12 +1008,12 @@ namespace DigitalCircuitDesign
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
                     //remove logic                    
-                    removeLinks("R" + GetNumber(tokens[3]) , "C" + GetNumber(tokens[5]) , "R" + GetNumber(tokens[7]) , "C" + GetNumber(tokens[9]));
+                    removeLinks("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]), "R" + GetNumber(tokens[7]), "C" + GetNumber(tokens[9]));
                     textBox1.Text = "Remove Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
                 }
-                               
+
                 droidReady = false;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
@@ -1058,9 +1058,9 @@ namespace DigitalCircuitDesign
 
                 if (yesNoForRemoveGateOrLink == "yes")
                 {
-                    Environment.Exit(0);    
+                    Environment.Exit(0);
                 }
-                
+
 
                 //Exit logic
 
@@ -1077,17 +1077,17 @@ namespace DigitalCircuitDesign
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
             }
-      
+
         }
 
         public void SpeechRecognizedForYesNo(object sender, SpeechRecognizedEventArgs e)
         {
-            yesNoForRemoveGateOrLink = e.Result.Text;            
+            yesNoForRemoveGateOrLink = e.Result.Text;
         }
 
         public void SpeechRejectedForYesNo(object sender, SpeechRecognitionRejectedEventArgs e)
         {
-            yesNoForRemoveGateOrLink = "invalid"; 
+            yesNoForRemoveGateOrLink = "invalid";
         }
 
         public void SpeechRejected(object sender, SpeechRecognitionRejectedEventArgs e)
@@ -1098,35 +1098,35 @@ namespace DigitalCircuitDesign
             if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                 secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
-            textBox1.Text = "Failed to recognize input. Please try again, start with the word droid ";            
+            textBox1.Text = "Failed to recognize input. Please try again, start with the word droid ";
             this.Focus();
         }
 
         public int GetNumber(string numberString)
         {
             int toReturn = -1;
-            switch(numberString)
+            switch (numberString)
             {
                 case "zero": toReturn = 0; break;
-                case "one":  toReturn = 1; break;
-                case "two":  toReturn = 2; break;
+                case "one": toReturn = 1; break;
+                case "two": toReturn = 2; break;
                 case "three": toReturn = 3; break;
-                case "four": toReturn = 4;  break;
-                case "five": toReturn = 5;  break;
-                case "six": toReturn = 6;  break;
-                case "seven": toReturn = 7;  break;
-                case "eight": toReturn = 8;  break;
-                case "nine": toReturn = 9;  break;
+                case "four": toReturn = 4; break;
+                case "five": toReturn = 5; break;
+                case "six": toReturn = 6; break;
+                case "seven": toReturn = 7; break;
+                case "eight": toReturn = 8; break;
+                case "nine": toReturn = 9; break;
                 case "ten": toReturn = 10; break;
                 case "eleven": toReturn = 11; break;
-                case "twelve": toReturn = 12;  break;
+                case "twelve": toReturn = 12; break;
                 case "thirteen": toReturn = 13; break;
-                case "fourteen": toReturn = 14;  break;
-                case "fifteen":  toReturn = 15;  break;
-                case "sixteen": toReturn = 16;  break;
-                case "seventeen": toReturn = 17;  break;
-                case "eighteen": toReturn = 18;  break;
-                case "nineteen": toReturn = 19;  break;
+                case "fourteen": toReturn = 14; break;
+                case "fifteen": toReturn = 15; break;
+                case "sixteen": toReturn = 16; break;
+                case "seventeen": toReturn = 17; break;
+                case "eighteen": toReturn = 18; break;
+                case "nineteen": toReturn = 19; break;
             }
 
             return toReturn;
@@ -1134,7 +1134,8 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            addGates("and", "R0", "C0","");
+            /*
+            addGates("and", "R0", "C0", "");
             addGates("nor", "R3", "C8", "");
             addLinks("R0", "C0", "R3", "C8");
 
@@ -1154,16 +1155,21 @@ namespace DigitalCircuitDesign
             addGates("nor", "R4", "C1", "");
             addLinks("R5", "C0", "R4", "C1");
 
-            addGates("source", "R0", "C10", "A");
-            addLinks("R4", "C1", "R0", "C10");
+            addGates("source", "R6", "C4", "B");
+            addGates("source", "R2", "C0", "A");
 
-            /*addGates("and", "R0", "C0");
-            addGates("nand", "R1", "C1");
-            addLinks("R0", "C0", "R1", "C1");*/
-            /*clear();
-            addGates("and", "R0", "C0");*/
-            //RecognizeSpeech();
-            
+
+            addLinks("R2", "C0", "R5", "C0");
+            addLinks("R2", "C0", "R2", "C3");
+            addLinks("R3", "C4", "R5", "C3");
+
+            addGates("source", "R1", "C10", "C");
+            addLinks("R6", "C8", "R1", "C10");
+            addLinks("R3", "C8", "R1", "C10");
+
+*/
+            RecognizeSpeech();
+
 
             /*addGates("or", "R1", "C0");
             addGates("not", "R6", "C8");
@@ -1186,7 +1192,7 @@ namespace DigitalCircuitDesign
             /*addGates("xor", "R5", "C9");
             addGates("nand", "R5", "C10");
             addLinks("R5", "C9", "R5", "C10");*/
-            
+
 
             //addGates("or", "R0", "C1");
             //addGates("not", "R0", "C2");
@@ -1273,7 +1279,7 @@ namespace DigitalCircuitDesign
         {
             removeFromRedoStack();
         }
-        
+
         public void addToUndoStack()
         {
             StackData s = new StackData(CloneDictionaryLayout(layout),
@@ -1534,9 +1540,9 @@ namespace DigitalCircuitDesign
                         }
                 color[temp] = 2;
             }
-            
+
             int totalLen = dist[dest];
-            LinkDirections ld = new LinkDirections(totalLen,x1,y1,x2,y2);
+            LinkDirections ld = new LinkDirections(totalLen, x1, y1, x2, y2);
             int next = dest;
             int j = totalLen - 1;
             while (next != start)
@@ -1588,6 +1594,7 @@ namespace DigitalCircuitDesign
             n.xcord = input.xcord;
             n.ycord = input.ycord;
             n.type = input.type;
+            n.sourceno = input.sourceno;
             n.input = new ArrayList(input.input.Count);
             for (int i = 0; i < input.input.Count; i++)
             {
