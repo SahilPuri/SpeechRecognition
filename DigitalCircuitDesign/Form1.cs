@@ -24,7 +24,7 @@ namespace DigitalCircuitDesign
         int sourceAlphabet = 65;
 
 
-        int nWidth = 17;
+        int nWidth = 15;
         int nHeight = 7;
         int start = 50;
         int width = 70;
@@ -34,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "C:/Users/patrick/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -69,9 +69,19 @@ namespace DigitalCircuitDesign
             clearAllImages();
             DrawGrid();
             DrawComponents();
+            DrawCheatSheet();
             //RecognizeSpeech();
             //base.OnPaint(e);
             //DrawLShapeLine(this.CreateGraphics(), 10, 10, 20, 40);
+        }
+        public void DrawCheatSheet()
+        {
+            PictureBox temp = new PictureBox();
+            temp.Image = Image.FromFile(imageFolder + "CheatSheet.jpg");
+            temp.Location = new Point((nWidth+1) * width, 10);
+            temp.Height = 500;
+            temp.Width = 300;
+            temp.Parent = this;
         }
         public void DrawGrid()
         {
@@ -1177,7 +1187,7 @@ namespace DigitalCircuitDesign
             addLinks("R3", "C8", "R1", "C10");
 
             */
-            RecognizeSpeech();
+            //RecognizeSpeech();
 
 
             /*addGates("or", "R1", "C0");
@@ -1399,6 +1409,8 @@ namespace DigitalCircuitDesign
             }
             return ret;
         }
+
+       
     }
 
     class StackData
