@@ -37,7 +37,7 @@
             // 
             this.textBox1.Font = new System.Drawing.Font("Verdana", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textBox1.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.textBox1.Location = new System.Drawing.Point(389, 574);
+            this.textBox1.Location = new System.Drawing.Point(286, 574);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
@@ -47,7 +47,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(588, 545);
+            this.button1.Location = new System.Drawing.Point(504, 545);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(116, 23);
             this.button1.TabIndex = 0;
@@ -56,7 +56,7 @@
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(921, 574);
+            this.textBox2.Location = new System.Drawing.Point(875, 574);
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
             this.textBox2.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;

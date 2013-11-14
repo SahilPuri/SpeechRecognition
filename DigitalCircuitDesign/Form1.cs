@@ -34,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "C:/Users/patrick/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -423,15 +423,17 @@ namespace DigitalCircuitDesign
             recognizer.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejected);
             recognizer.SetInputToDefaultAudioDevice();
 
-            GrammarBuilder clear = new GrammarBuilder("Clear");
+            recognizer.EndSilenceTimeout= System.TimeSpan.FromSeconds(1);
+
+            GrammarBuilder clean = new GrammarBuilder("Clean");
             GrammarBuilder undo = new GrammarBuilder("Undo");
             GrammarBuilder redo = new GrammarBuilder("Redo");
             GrammarBuilder exit = new GrammarBuilder("Exit");
 
             GrammarBuilder insert = new GrammarBuilder("Insert");
             Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand", "source", "output" });
-            Choices columns = new Choices(new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
-            Choices rows = new Choices(new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" });
+            Choices columns = new Choices(new string[] { "zero", "one", "two", "three", "fore", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
+            Choices rows = new Choices(new string[] { "zero", "one", "two", "three", "fore", "five", "six", "seven", "eight", "nine" });
             //Choices orientation = new Choices(new string[] { "left", "right", "up", "down" });
             insert.Append(gates);
             insert.Append("R");
@@ -454,48 +456,48 @@ namespace DigitalCircuitDesign
             connect.Append("C");
             connect.Append(columns);
 
-            GrammarBuilder removeGate = new GrammarBuilder("Remove");
-            removeGate.Append("gate");
-            removeGate.Append("R");
-            removeGate.Append(rows);
-            removeGate.Append("C");
-            removeGate.Append(columns);
+            GrammarBuilder deleteGate = new GrammarBuilder("Delete");
+            deleteGate.Append("gate");
+            deleteGate.Append("R");
+            deleteGate.Append(rows);
+            deleteGate.Append("C");
+            deleteGate.Append(columns);
 
-            GrammarBuilder removeLink = new GrammarBuilder("Remove");
-            removeLink.Append("link");
-            removeLink.Append("R");
-            removeLink.Append(rows);
-            removeLink.Append("C");
-            removeLink.Append(columns);
-            removeLink.Append("R");
-            removeLink.Append(rows);
-            removeLink.Append("C");
-            removeLink.Append(columns);
+            GrammarBuilder deleteLink = new GrammarBuilder("Delete");
+            deleteLink.Append("link");
+            deleteLink.Append("R");
+            deleteLink.Append(rows);
+            deleteLink.Append("C");
+            deleteLink.Append(columns);
+            deleteLink.Append("R");
+            deleteLink.Append(rows);
+            deleteLink.Append("C");
+            deleteLink.Append(columns);
 
 
 
             GrammarBuilder droidStart = new GrammarBuilder("droid");
 
 
-            Grammar _clear_grammar = new Grammar(clear);
+            Grammar _clean_grammar = new Grammar(clean);
             Grammar _insert_grammar = new Grammar(insert);
             Grammar _connect_grammar = new Grammar(connect);
             Grammar _droid_Start = new Grammar(droidStart);
             Grammar _undo = new Grammar(undo);
             Grammar _redo = new Grammar(redo);
             Grammar _exit = new Grammar(exit);
-            Grammar _removeGate = new Grammar(removeGate);
-            Grammar _removeLink = new Grammar(removeLink);
+            Grammar _deleteGate = new Grammar(deleteGate);
+            Grammar _deleteLink = new Grammar(deleteLink);
 
-            recognizer.LoadGrammarAsync(_clear_grammar);
+            recognizer.LoadGrammarAsync(_clean_grammar);
             recognizer.LoadGrammarAsync(_insert_grammar);
             recognizer.LoadGrammarAsync(_connect_grammar);
             recognizer.LoadGrammarAsync(_droid_Start);
             recognizer.LoadGrammarAsync(_undo);
             recognizer.LoadGrammarAsync(_redo);
             recognizer.LoadGrammarAsync(_exit);
-            recognizer.LoadGrammarAsync(_removeGate);
-            recognizer.LoadGrammarAsync(_removeLink);
+            recognizer.LoadGrammarAsync(_deleteGate);
+            recognizer.LoadGrammarAsync(_deleteLink);
 
             //recognizer.RecognizeAsync(RecognizeMode.Multiple);
             while (true)
@@ -720,10 +722,10 @@ namespace DigitalCircuitDesign
                 this.Focus();
 
             }
-            else if (tokens[0] == "Clear" && droidReady == true)
+            else if (tokens[0] == "Clean" && droidReady == true)
             {
 
-                textBox1.Text = "Are you sure you want to clear the screen? Please say yes or no!";
+                textBox1.Text = "Are you sure you want to clean the screen? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -736,6 +738,8 @@ namespace DigitalCircuitDesign
                 recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
                 recognizerYesNo.SetInputToDefaultAudioDevice();
 
+                recognizerYesNo.EndSilenceTimeout = System.TimeSpan.FromSeconds(1);
+
                 GrammarBuilder yes = new GrammarBuilder("yes");
                 GrammarBuilder no = new GrammarBuilder("no");
                 Grammar _yes = new Grammar(yes);
@@ -747,7 +751,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "I could not hear you. Are you sure you want to clear the screen? Please say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to clean the screen? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -762,7 +766,7 @@ namespace DigitalCircuitDesign
                 {
                     //Clear logic                  
                     clear();
-                    textBox1.Text = "Clear";
+                    textBox1.Text = "Clean";
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
                 }
@@ -812,7 +816,7 @@ namespace DigitalCircuitDesign
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
                 this.Focus();
             }
-            else if (tokens[0] == "Remove" && tokens[1] == "gate" && droidReady == true)
+            else if (tokens[0] == "Delete" && tokens[1] == "gate" && droidReady == true)
             {
                 if (GetNumber(tokens[3]) > 6)
                 {
@@ -841,7 +845,7 @@ namespace DigitalCircuitDesign
 
                 if (!layout.ContainsKey("R" + GetNumber(tokens[3]) + "C" + GetNumber(tokens[5])))
                 {
-                    textBox1.Text = "No gate to remove in slot R" + GetNumber(tokens[3]) + " C" + GetNumber(tokens[5]);
+                    textBox1.Text = "No gate to delete in slot R" + GetNumber(tokens[3]) + " C" + GetNumber(tokens[5]);
                     textBox1.Enabled = true;
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
@@ -854,7 +858,7 @@ namespace DigitalCircuitDesign
                     return;
                 }
 
-                textBox1.Text = "Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
+                textBox1.Text = "Are you sure you want to delete gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -867,6 +871,8 @@ namespace DigitalCircuitDesign
                 recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
                 recognizerYesNo.SetInputToDefaultAudioDevice();
 
+                recognizerYesNo.EndSilenceTimeout = System.TimeSpan.FromSeconds(1);
+
                 GrammarBuilder yes = new GrammarBuilder("yes");
                 GrammarBuilder no = new GrammarBuilder("no");
                 Grammar _yes = new Grammar(yes);
@@ -878,7 +884,7 @@ namespace DigitalCircuitDesign
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "I could not hear you. Are you sure you want to remove gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to delete gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + "? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -893,7 +899,7 @@ namespace DigitalCircuitDesign
                 {
                     //remove logic                    
                     removeGates("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]));
-                    textBox1.Text = "Remove Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
+                    textBox1.Text = "Delete Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
                 }
@@ -905,7 +911,7 @@ namespace DigitalCircuitDesign
                 this.Focus();
 
             }
-            else if (tokens[0] == "Remove" && tokens[1] == "link" && droidReady == true)
+            else if (tokens[0] == "Delete" && tokens[1] == "link" && droidReady == true)
             {
                 if (GetNumber(tokens[3]) > 6)
                 {
@@ -981,7 +987,7 @@ namespace DigitalCircuitDesign
 
 
 
-                textBox1.Text = "Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+                textBox1.Text = "Are you sure you want to delete link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                 textBox1.Enabled = true;
                 textBox1.BackColor = Color.White;
                 textBox1.ForeColor = Color.Red;
@@ -994,18 +1000,21 @@ namespace DigitalCircuitDesign
                 recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
                 recognizerYesNo.SetInputToDefaultAudioDevice();
 
+                recognizerYesNo.EndSilenceTimeout = System.TimeSpan.FromSeconds(1);
+
                 GrammarBuilder yes = new GrammarBuilder("yes");
                 GrammarBuilder no = new GrammarBuilder("no");
                 Grammar _yes = new Grammar(yes);
                 Grammar _no = new Grammar(no);
                 recognizerYesNo.LoadGrammarAsync(_yes);
                 recognizerYesNo.LoadGrammarAsync(_no);
+                
 
                 recognizerYesNo.Recognize();
 
                 while (yesNoForRemoveGateOrLink == "invalid")
                 {
-                    textBox1.Text = "I could not hear you. Are you sure you want to remove link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
+                    textBox1.Text = "I could not hear you. Are you sure you want to delete link from R" + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " to R" + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]) + "? Please say yes or no!";
                     textBox1.BackColor = Color.White;
                     textBox1.ForeColor = Color.Red;
                     this.Focus();
@@ -1020,7 +1029,7 @@ namespace DigitalCircuitDesign
                 {
                     //remove logic                    
                     removeLinks("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]), "R" + GetNumber(tokens[7]), "C" + GetNumber(tokens[9]));
-                    textBox1.Text = "Remove Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
+                    textBox1.Text = "Delete Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
                 }
@@ -1044,6 +1053,8 @@ namespace DigitalCircuitDesign
                 recognizerYesNo.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(SpeechRecognizedForYesNo);
                 recognizerYesNo.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(SpeechRejectedForYesNo);
                 recognizerYesNo.SetInputToDefaultAudioDevice();
+
+                recognizerYesNo.EndSilenceTimeout = System.TimeSpan.FromSeconds(1);
 
                 GrammarBuilder yes = new GrammarBuilder("yes");
                 GrammarBuilder no = new GrammarBuilder("no");
@@ -1122,7 +1133,7 @@ namespace DigitalCircuitDesign
                 case "one": toReturn = 1; break;
                 case "two": toReturn = 2; break;
                 case "three": toReturn = 3; break;
-                case "four": toReturn = 4; break;
+                case "fore": toReturn = 4; break;
                 case "five": toReturn = 5; break;
                 case "six": toReturn = 6; break;
                 case "seven": toReturn = 7; break;
@@ -1187,7 +1198,7 @@ namespace DigitalCircuitDesign
             addLinks("R3", "C8", "R1", "C10");
 
             */
-            //RecognizeSpeech();
+            RecognizeSpeech();
 
 
             /*addGates("or", "R1", "C0");
