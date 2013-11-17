@@ -66,3 +66,4 @@ E:\Workspace\VisualStudio\SpeechRecognition-master\DigitalCircuitDesign\obj\Debu
 E:\Workspace\VisualStudio\SpeechRecognition-master\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.Properties.Resources.resources
 E:\Workspace\VisualStudio\SpeechRecognition-master\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.SecondUIThreadForm.resources
 E:\Workspace\VisualStudio\SpeechRecognition-master\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.csproj.GenerateResource.Cache
+C:\Users\Sail\Documents\GitHub\SpeechRecognition\DigitalCircuitDesign\obj\Debug\DigitalCircuitDesign.SecondUIThreadForm.resources

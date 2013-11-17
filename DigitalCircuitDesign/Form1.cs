@@ -34,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "C:/Users/patrick/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "C:/Users/Sail/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -226,7 +226,7 @@ namespace DigitalCircuitDesign
                     case "nand": type = Gates.NAND; break;
                     case "nor": type = Gates.NOR; break;
                     case "not": type = Gates.NOT; break;
-                    case "xor": type = Gates.EXOR; break;
+                    case "exor": type = Gates.EXOR; break;
                     case "source": type = Gates.SOURCE; break;
                     case "output": type = Gates.OUTPUT; break;
                     //case "xnor": array[x, y] = "XN"; break;
@@ -432,8 +432,8 @@ namespace DigitalCircuitDesign
 
             GrammarBuilder insert = new GrammarBuilder("Insert");
             Choices gates = new Choices(new string[] { "and", "or", "not", "exor", "nor", "nand", "source", "output" });
-            Choices columns = new Choices(new string[] { "zero", "one", "two", "three", "fore", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
-            Choices rows = new Choices(new string[] { "zero", "one", "two", "three", "fore", "five", "six", "seven", "eight", "nine" });
+            Choices columns = new Choices(new string[] { "zero", "one", "two", "three", "fore","four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen" });
+            Choices rows = new Choices(new string[] { "zero", "one", "two", "three", "fore", "four", "five","six", "seven", "eight", "nine" });
             //Choices orientation = new Choices(new string[] { "left", "right", "up", "down" });
             insert.Append(gates);
             insert.Append("R");
@@ -502,7 +502,11 @@ namespace DigitalCircuitDesign
             //recognizer.RecognizeAsync(RecognizeMode.Multiple);
             while (true)
             {
-                recognizer.Recognize();
+                try
+                {
+                    recognizer.Recognize();
+                }catch(Exception ex){
+                }
             }
 
         }
@@ -599,7 +603,10 @@ namespace DigitalCircuitDesign
                 droidReady = false;
                 historyOfdroids = historyOfdroids + "Insert " + gate.ToUpper() + " R" + r + " C" + c + "\r\n";
                 textBox2.Text = historyOfdroids;
-
+                textBox2.ScrollToCaret();
+                arr2 = new StackData[5];
+                currStart2 = 0;
+                currEnd2 = 0;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
@@ -715,7 +722,9 @@ namespace DigitalCircuitDesign
                 historyOfdroids = historyOfdroids + "Connect " + rowS + " " + colS + " " + rowE + " " + colE + "\r\n";
                 textBox2.Text = historyOfdroids;
                 addLinks(rowS, colS, rowE, colE);
-
+                arr2 = new StackData[5];
+                currStart2 = 0;
+                currEnd2 = 0;
                 if (secondThreadForm != null && secondThreadForm.IsHandleCreated)
                     secondThreadForm.Invoke((Action)(() => secondThreadForm.Close()));
 
@@ -766,6 +775,9 @@ namespace DigitalCircuitDesign
                 {
                     //Clear logic                  
                     clear();
+                    arr2 = new StackData[5];
+                    currStart2 = 0;
+                    currEnd2 = 0;
                     textBox1.Text = "Clean";
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
                     textBox2.Text = historyOfdroids;
@@ -901,6 +913,9 @@ namespace DigitalCircuitDesign
                     removeGates("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]));
                     textBox1.Text = "Delete Gate R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    arr2 = new StackData[5];
+                    currStart2 = 0;
+                    currEnd2 = 0;
                     textBox2.Text = historyOfdroids;
                 }
 
@@ -1031,6 +1046,9 @@ namespace DigitalCircuitDesign
                     removeLinks("R" + GetNumber(tokens[3]), "C" + GetNumber(tokens[5]), "R" + GetNumber(tokens[7]), "C" + GetNumber(tokens[9]));
                     textBox1.Text = "Delete Link R " + GetNumber(tokens[3]) + " C " + GetNumber(tokens[5]) + " R " + GetNumber(tokens[7]) + " C " + GetNumber(tokens[9]);
                     historyOfdroids = historyOfdroids + e.Result.Text + "\r\n";
+                    arr2 = new StackData[5];
+                    currStart2 = 0;
+                    currEnd2 = 0;
                     textBox2.Text = historyOfdroids;
                 }
 
@@ -1134,6 +1152,7 @@ namespace DigitalCircuitDesign
                 case "two": toReturn = 2; break;
                 case "three": toReturn = 3; break;
                 case "fore": toReturn = 4; break;
+                case "four": toReturn = 4; break;
                 case "five": toReturn = 5; break;
                 case "six": toReturn = 6; break;
                 case "seven": toReturn = 7; break;
