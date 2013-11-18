@@ -34,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "C:/Users/Sail/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -53,6 +53,9 @@ namespace DigitalCircuitDesign
         int currEnd2 = 0;
 
         PictureBox[,] pic = new PictureBox[100, 100];
+
+        /*for parallel connections at end point*/
+        Dictionary<String, int> connHash = new Dictionary<String, int>();
 
         public Form1()
         {
@@ -130,6 +133,7 @@ namespace DigitalCircuitDesign
         }
         public void DrawComponents()
         {
+            connHash.Clear();
             foreach (LinkDirections ld in links.Values)
             {
                 connectGates(ld.x, ld.y, ld.destX, ld.destY, ld.directions, ld.offset);
@@ -246,9 +250,15 @@ namespace DigitalCircuitDesign
             int xEnd = Convert.ToInt32(rowEnd.Substring(1));
             int yEnd = Convert.ToInt32(colEnd.Substring(1));
 
+            if(xEnd-xStart<=1 && yEnd-yStart<=1){
+                textBox1.Text=textBox1.Text+"hi";
+                LinkDirections ld = new LinkDirections(1,xStart,yStart+1,xEnd,yEnd);
+                links.Add(linkCnt, ld);
+            }
+            else{
             LinkDirections ld = clObject.shortestpath(xStart, yStart + 1, xEnd, yEnd);
             links.Add(linkCnt, ld);
-
+            }
             layout[rowStart + colStart].output.Add(linkCnt);
             layout[rowEnd + colEnd].input.Add(linkCnt);
             linkCnt++;
@@ -265,125 +275,203 @@ namespace DigitalCircuitDesign
         {
             //lasth and v offset keep track of recent offset difference
             int lasthoffset = 0, lastvoffset = 0;
+            int off = 10;
             int curry = rowS * height + start, currx = colS * width + start;
+            int curry2 = rowE * height + start, currx2 = colE * width + start;
             //Method implement to add connection between gates
             //additional 3 for start,2 for end, + path length ; //4 for start, and 3 arrow points
-            Point[] points = new Point[path.Length + 5];
-            if (path.Length > 1)
+            Point[] points ;
+            if (path.Length ==1)
             {
-                if (path[0] == 'L' || path[0] == 'R')
+                points= new Point[5];
+                Point temp = new Point(currx, curry + offset[0] + (height / 2));
+                points[0] = new Point(currx - (width / 2), temp.Y);
+                points[1] = new Point(currx,curry);
+                if (curry == curry2 && currx == currx2)
                 {
-                    curry += offset[0];
-                    lastvoffset = offset[0];
+                    points[2] = new Point(currx, curry);
                 }
                 else
                 {
-                    currx += offset[0];
-                    lasthoffset = offset[0];
+                        points[2] = new Point(currx2, curry2);
                 }
-            }
-            //connecting gate with first point (output)
-            Point temp;
-            if (true)
-            {
-                //comp is down
-                temp = new Point(currx, curry + offset[0] + (height / 2));
-            }
-            /*else
-            {
-                //comp is above
-                temp = new Point(currx, curry - offset[0] - (height / 2));
-            }*/
-            int i = 0;
-            points[i++] = new Point(currx - (width / 2), temp.Y);
-            points[i++] = temp;
-            //rest of the points
-            points[i++] = new Point(currx, curry);
-
-
-            //calculate remaining points
-            for (i = 0; i < path.Length; i++)
-            {
-                //int nextOffset = (i != path.Length - 1 &&
-                // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
-                // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
-
-                int nextOffset = (i != path.Length - 1) ? (offset[i + 1] == 0) ? 0 : offset[i + 1] + 5 : 0;
-                //also avoids the small offset difference that gets accumulated till the end
-                switch (path[i])
+                
+                currx = currx2;
+                curry = curry2;
+                if (curry <= ((height * rowE) + start + (height / 2)))
                 {
-                    case 'L': currx = currx - lasthoffset - width + nextOffset; lasthoffset = nextOffset; break;
-                    case 'R': currx = currx - lasthoffset + width + nextOffset; lasthoffset = nextOffset; break;
-                    case 'U': curry = curry - lastvoffset - height + nextOffset; lastvoffset = nextOffset; break;
-                    case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
-                }
-                //make the second point void if component is upwards and first point is downwards
-                if (i == 0 && i != path.Length - 1 && currx == points[i + 2].X)
-                {
-                    points[i + 2] = new Point(currx, curry);
-                }
-                else if (i == (path.Length - 1) && currx == points[i + 2].X)
-                {
-                    if (points[i + 2].Y < curry)
+                    if (connHash.ContainsKey("" + currx2 + ":" + curry2))
                     {
-                        //component is down
-                        points[i + 2] = new Point(currx, curry);
+                        points[2].X -= off;
+                        points[3] = new Point(currx + inPinWidth-5, curry + ((height / 2) - 5));
+                        points[4] = new Point(currx + inPinWidth-5, curry + ((height / 2) - 5));
+                    }else{
+                        points[3] = new Point(currx + inPinWidth , curry + ((height / 2) - 5));
+                        points[4] = new Point(currx + inPinWidth , curry + ((height / 2) - 5));
+                        connHash.Add(""+currx2+":"+curry2,1);
+                    }
+                }
+                else
+                {
+                    if (connHash.ContainsKey("" + currx2 + ":" + curry2))
+                    {
+                        points[2].X -= off;
+                        points[3] = new Point(currx + inPinWidth-5, curry - ((height / 2) - 5));
+                        points[4] = new Point(currx + inPinWidth-5, curry - ((height / 2) - 5));
                     }
                     else
                     {
-                        //component is up
-                        currx = points[i + 2].X;
-                        curry = points[i + 2].Y;
+                        points[3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
+                        points[4] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
+                        connHash.Add("" + currx2 + ":" + curry2, 1);
                     }
                 }
-                points[i + 3] = new Point(currx, curry);
-            }
-            //connect last point with the gate
-
-            if (curry <= ((height * rowE) + start + (height / 2)))
-            {
-                //comp is down
-                points[i + 3] = new Point(currx, curry + (height / 4));
-                i++;
-                points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2) - 5));
+                
             }
             else
             {
-                //comp is up
-                points[i + 3] = new Point(currx, curry - (height / 4));
-                i++;
-                points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
-            }
+                points = new Point[path.Length + 5];
+                if (path.Length > 1)
+                {
+                    if (path[0] == 'L' || path[0] == 'R')
+                    {
+                        curry += offset[0];
+                        lastvoffset = offset[0];
+                    }
+                    else
+                    {
+                        currx += offset[0];
+                        lasthoffset = offset[0];
+                    }
+                }
+                //connecting gate with first point (output)
+                Point temp;
+                if (true)
+                {
+                    //comp is down
+                    temp = new Point(currx, curry + offset[0] + (height / 2));
+                }
+                /*else
+                {
+                    //comp is above
+                    temp = new Point(currx, curry - offset[0] - (height / 2));
+                }*/
+                int i = 0;
+                points[i++] = new Point(currx - (width / 2), temp.Y);
+                points[i++] = new Point(currx - (width / 2), temp.Y);
+                //rest of the points
+                points[i++] = new Point(currx, curry);
 
-            //textBox1.Text += points[i + 3].X;
-            /*
-            int arrowSize = 0;
-            int x = points[path.Length].X;
-            int y = points[path.Length].Y;
-            // Arrow
-            switch(path[path.Length-1]){
-                case 'L':
-                    //left arrow
-                    points[path.Length+1] = new Point(x+ arrowSize, y - arrowSize);
-            points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
-            points[path.Length+3]=new Point(x , y);break;
-                case 'R':
-                    //right arrow
-                    points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
-            points[path.Length+2]=new Point(x - arrowSize, y + arrowSize);
-            points[path.Length+3]=new Point(x , y);break;
-                case 'U':
-                    //up arrow
-                    points[path.Length+1] = new Point(x- arrowSize, y + arrowSize);
-            points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
-            points[path.Length+3]=new Point(x , y);break;
-                case 'D':
-                    //down arrow
-                    points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
-            points[path.Length+2]=new Point(x + arrowSize, y - arrowSize);
-            points[path.Length+3]=new Point(x , y);break;
-        }
-            */
+
+                //calculate remaining points
+                for (i = 0; i < path.Length; i++)
+                {
+                    //int nextOffset = (i != path.Length - 1 &&
+                    // (((path[i] == 'L' || path[i] == 'R') && (path[i + 1] == 'U' || path[i + 1] == 'D')) ||
+                    // ((path[i] == 'U' || path[i] == 'D') && (path[i + 1] == 'L' || path[i + 1] == 'R')))) ? offset[i + 1] : 0;
+
+                    int nextOffset = (i != path.Length - 1) ? (offset[i + 1] == 0) ? 0 : offset[i + 1] + 5 : 0;
+                    //also avoids the small offset difference that gets accumulated till the end
+                    switch (path[i])
+                    {
+                        case 'L': currx = currx - lasthoffset - width + nextOffset; lasthoffset = nextOffset; break;
+                        case 'R': currx = currx - lasthoffset + width + nextOffset; lasthoffset = nextOffset; break;
+                        case 'U': curry = curry - lastvoffset - height + nextOffset; lastvoffset = nextOffset; break;
+                        case 'D': curry = curry - lastvoffset + height + nextOffset; lastvoffset = nextOffset; break;
+                    }
+                    //make the second point void if component is upwards and first point is downwards
+                    if (i == 0 && i != path.Length - 1 && currx == points[i + 2].X)
+                    {
+                        //points[i + 2] = new Point(currx, curry);
+                    }
+                    else if (i == (path.Length - 1) && currx == points[i + 2].X)
+                    {
+                        if (points[i + 2].Y < curry)
+                        {
+                            //component is down
+                            //points[i + 2] = new Point(currx, curry);
+                        }
+                        else
+                        {
+                            //component is up
+                            //currx = points[i + 2].X;
+                            //curry = points[i + 2].Y;
+                        }
+                    }
+                    points[i + 3] = new Point(currx, curry);
+                }
+                //connect last point with the gate
+
+                if (curry <= ((height * rowE) + start + (height / 2)))
+                {
+                    //comp is down
+                    //points[i + 3] = new Point(currx, curry + (height / 4));
+                    //i++;
+                    //points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2) - 5));
+                    if (connHash.ContainsKey("" + currx + ":" + curry))
+                    {
+                        points[i + 2].X -= off;
+                        points[i + 3] = new Point(currx + inPinWidth-3, curry + ((height / 2) - 5));
+                        i++;
+                        points[i + 3] = new Point(currx + inPinWidth-3, curry + ((height / 2) - 5));
+                    }
+                    else
+                    {
+                        points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2) - 5));
+                        i++;
+                        points[i + 3] = new Point(currx + inPinWidth, curry + ((height / 2) - 5));
+                        connHash.Add("" + currx + ":" + curry, 1);
+                    }
+                    
+                }
+                else
+                {
+                    //comp is up
+                    /*points[i + 3] = new Point(currx, curry - (height / 4));
+                    i++;
+                    points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));*/
+                    if (connHash.ContainsKey("" + currx + ":" + curry)){
+                        points[i + 2].X -= off;
+                    points[i + 3] = new Point(currx + inPinWidth-3, curry - ((height / 2) - 5));
+                    i++;
+                    points[i + 3] = new Point(currx + inPinWidth-3, curry - ((height / 2) - 5));
+                    }else{
+                        points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
+                        i++;
+                        points[i + 3] = new Point(currx + inPinWidth, curry - ((height / 2) - 5));
+                        connHash.Add("" + currx + ":" + curry, 1);
+                    }
+                }
+                //textBox1.Text += points[i + 3].X;
+                /*
+                int arrowSize = 0;
+                int x = points[path.Length].X;
+                int y = points[path.Length].Y;
+                // Arrow
+                switch(path[path.Length-1]){
+                    case 'L':
+                        //left arrow
+                        points[path.Length+1] = new Point(x+ arrowSize, y - arrowSize);
+                points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
+                points[path.Length+3]=new Point(x , y);break;
+                    case 'R':
+                        //right arrow
+                        points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
+                points[path.Length+2]=new Point(x - arrowSize, y + arrowSize);
+                points[path.Length+3]=new Point(x , y);break;
+                    case 'U':
+                        //up arrow
+                        points[path.Length+1] = new Point(x- arrowSize, y + arrowSize);
+                points[path.Length+2]=new Point(x + arrowSize, y + arrowSize);
+                points[path.Length+3]=new Point(x , y);break;
+                    case 'D':
+                        //down arrow
+                        points[path.Length+1] = new Point(x- arrowSize, y - arrowSize);
+                points[path.Length+2]=new Point(x + arrowSize, y - arrowSize);
+                points[path.Length+3]=new Point(x , y);break;
+            }
+                */
+            }
             Pen myPen = new Pen(Color.Blue);
             myPen.Width = 3;
             this.CreateGraphics().DrawLines(myPen, points);
@@ -1175,7 +1263,7 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            /*
+            
             addGates("source", "R0", "C4", "A");
             addGates("source", "R2", "C4", "B");
             addGates("or", "R1", "C6", "");
@@ -1208,16 +1296,16 @@ namespace DigitalCircuitDesign
             addGates("source", "R2", "C0", "A");
 
 
-            addLinks("R2", "C0", "R5", "C0");
+            /*addLinks("R2", "C0", "R5", "C0");
             addLinks("R2", "C0", "R2", "C3");
             addLinks("R3", "C4", "R5", "C3");
 
             addGates("source", "R1", "C10", "C");
             addLinks("R6", "C8", "R1", "C10");
             addLinks("R3", "C8", "R1", "C10");
-
             */
-            RecognizeSpeech();
+            
+            //RecognizeSpeech();
 
 
             /*addGates("or", "R1", "C0");
@@ -1235,12 +1323,12 @@ namespace DigitalCircuitDesign
 
             addGates("and", "R5", "C0");
             addGates("nor", "R4", "C1");
-            addLinks("R5", "C0", "R4", "C1");
+            addLinks("R5", "C0", "R4", "C1");*/
             
             //failed test 
-            /*addGates("xor", "R5", "C9");
-            addGates("nand", "R5", "C10");
-            addLinks("R5", "C9", "R5", "C10");*/
+            addGates("xor", "R5", "C11","");
+            addGates("nand", "R6", "C11","");
+            addLinks("R5", "C11", "R6", "C11");
 
 
             //addGates("or", "R0", "C1");
