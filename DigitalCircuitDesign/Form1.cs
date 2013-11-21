@@ -34,7 +34,7 @@ namespace DigitalCircuitDesign
         int picHeightError = 10;
         int outPinWidth = 11;
         int inPinWidth = 15;
-        static String imageFolder = "E:/Workspace/github/SpeechRecognition/DigitalCircuitDesign/images/";
+        static String imageFolder = "C:/Users/patrick/Documents/GitHub/SpeechRecognition/DigitalCircuitDesign/images/";
 
         /*Start of State of the System*/
         Dictionary<String, Layout> layout = new Dictionary<String, Layout>();
@@ -80,7 +80,7 @@ namespace DigitalCircuitDesign
         public void DrawCheatSheet()
         {
             PictureBox temp = new PictureBox();
-            temp.Image = Image.FromFile(imageFolder + "CheatSheet.jpg");
+            temp.Image = Image.FromFile(imageFolder + "CheatSheet.png");
             temp.Location = new Point((nWidth+1) * width, 10);
             temp.Height = 500;
             temp.Width = 300;
@@ -1263,7 +1263,7 @@ namespace DigitalCircuitDesign
 
         private void button1_Click(object sender, EventArgs e)
         {
-            
+            /*
             addGates("source", "R0", "C4", "A");
             addGates("source", "R2", "C4", "B");
             addGates("or", "R1", "C6", "");
@@ -1294,7 +1294,7 @@ namespace DigitalCircuitDesign
 
             addGates("source", "R6", "C4", "B");
             addGates("source", "R2", "C0", "A");
-
+            */
 
             /*addLinks("R2", "C0", "R5", "C0");
             addLinks("R2", "C0", "R2", "C3");
@@ -1305,7 +1305,7 @@ namespace DigitalCircuitDesign
             addLinks("R3", "C8", "R1", "C10");
             */
             
-            //RecognizeSpeech();
+            RecognizeSpeech();
 
 
             /*addGates("or", "R1", "C0");
@@ -1345,6 +1345,8 @@ namespace DigitalCircuitDesign
             links = new Dictionary<int, LinkDirections>();
             clObject = new ConnectLink(clObject.m, clObject.n, clObject.maxLinks);
             linkCnt = 0;
+            clearAllImages();
+            this.Invalidate();
         }
 
         public void removeGates(String row, String col)
